@@ -1,0 +1,14 @@
+<%- include('../partials/header'); %>
+
+<div id="app"></div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Vue.config.productionTip = false
+    new Vue({
+        render: h => h(App),
+      }).$mount('#app')
+  });
+</script>
+
+<%- include('../partials/footer'); %>
