@@ -15,7 +15,7 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     alias: {
-      vue: 'vue/dist/vue.min.js'
+      vue: 'vue/dist/vue.js'
     }
   },
   output: {
