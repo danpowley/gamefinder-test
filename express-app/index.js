@@ -21,22 +21,82 @@ app.get('/', function(req, res) {
 // post("/api/team/get/" + a)
 app.post('/api/team/get/:teamId', (req, res) => {
   res.send({
-    teamId: req.params.teamId
+    name: 'Team100',
+    teamValue: 3000000,
+    rerolls: 3,
+    fanFactor: 4,
+    treasury: 150000,
+    roster: {
+      name: 'Tomb King'
+    },
+    players: [
+      {
+        injuries: '-MA,-ST',
+        position: 'Lineman',
+        skills: ['Block', 'Dodge']
+      }
+    ]
   })
 })
 
 // post("/api/coach/teams/" + this.coachName)
 app.post('/api/coach/teams/:coachName', (req, res) => {
   res.send({
-    coachName: req.params.coachName
+    teams: [
+      {
+        id: 1,
+        name: 'Team1',
+        canLfg: 'Yes',
+        status: 'Active',
+        teamValue: 1230000,
+        race: 'Tomb Kings',
+        raceLogos: [
+          {
+            size: 32,
+            logo: 486296
+          },
+        ]
+      },
+      {
+        id: 2,
+        name: 'Team2',
+        canLfg: 'Yes',
+        status: 'Active',
+        teamValue: 1830000,
+        race: 'Tomb Kings',
+        raceLogos: [
+          {
+            size: 32,
+            logo: 486296
+          },
+        ]
+      }
+    ]
   })
 })
 
 // post("/api/gamefinder/teams")
 app.post('/api/gamefinder/teams', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  res.send([
+    {
+      name: 'bobbo',
+      ranking: 'Legend',
+      teams: [{
+        id: 1,
+        name: 'Team100',
+        canLfg: 'Yes',
+        status: 'Active',
+        teamValue: 2000000,
+        race: 'Tomb Kings',
+        raceLogos: [
+          {
+            size: 32,
+            logo: 486296
+          },
+        ]
+      }]
+    }
+  ])
 })
 
 // post("/api/gamefinder/getoffers")
@@ -56,7 +116,32 @@ app.post('/api/gamefinder/activate', (req, res) => {
 // post("/api/gamefinder/coachteams")
 app.post('/api/gamefinder/coachteams', (req, res) => {
   res.send({
-    foo: 'bar'
+    teams: [
+      {
+        id: 1,
+        name: 'Team1',
+        teamValue: 1230000,
+        race: 'Tomb Kings',
+        raceLogos: [
+          {
+            size: 32,
+            logo: 486296
+          },
+        ]
+      },
+      {
+        id: 2,
+        name: 'Team2',
+        teamValue: 1830000,
+        race: 'Tomb Kings',
+        raceLogos: [
+          {
+            size: 32,
+            logo: 486296
+          },
+        ]
+      }
+    ]
   })
 })
 
