@@ -18,7 +18,7 @@ app.get('/', function(req, res) {
   res.render('pages/index');
 });
 
-// post("/api/team/get/" + a)
+// used to display an opponents team data when you hover over it
 app.post('/api/team/get/:teamId', (req, res) => {
   res.send({
     name: 'Team100',
@@ -39,7 +39,7 @@ app.post('/api/team/get/:teamId', (req, res) => {
   })
 })
 
-// post("/api/coach/teams/" + this.coachName)
+// this is used to set up the check box list of teams "Choose teams" link
 app.post('/api/coach/teams/:coachName', (req, res) => {
   res.send({
     teams: [
@@ -75,7 +75,7 @@ app.post('/api/coach/teams/:coachName', (req, res) => {
   })
 })
 
-// post("/api/gamefinder/teams")
+// used to get the teams available as opponents
 app.post('/api/gamefinder/teams', (req, res) => {
   res.send([
     {
@@ -113,7 +113,7 @@ app.post('/api/gamefinder/activate', (req, res) => {
   })
 })
 
-// post("/api/gamefinder/coachteams")
+// returns my teams activated for search
 app.post('/api/gamefinder/coachteams', (req, res) => {
   res.send({
     teams: [
