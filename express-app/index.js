@@ -45,6 +45,7 @@ app.post('/api/coach/teams/:coachName', (req, res) => {
     teams: [
       {
         id: 1,
+        coach: req.params.coachName,
         name: 'Team1',
         canLfg: 'Yes',
         status: 'Active',
@@ -55,10 +56,14 @@ app.post('/api/coach/teams/:coachName', (req, res) => {
             size: 32,
             logo: 486296
           },
-        ]
+        ],
+        league: {
+          valid: false
+        }
       },
       {
         id: 2,
+        coach: req.params.coachName,
         name: 'Team2',
         canLfg: 'Yes',
         status: 'Active',
@@ -69,7 +74,10 @@ app.post('/api/coach/teams/:coachName', (req, res) => {
             size: 32,
             logo: 486296
           },
-        ]
+        ],
+        league: {
+          valid: false
+        }
       }
     ]
   })
@@ -83,6 +91,7 @@ app.post('/api/gamefinder/teams', (req, res) => {
       ranking: 'Legend',
       teams: [{
         id: 1,
+        coach: 'bobbo',
         name: 'Team100',
         canLfg: 'Yes',
         status: 'Active',
@@ -93,7 +102,10 @@ app.post('/api/gamefinder/teams', (req, res) => {
             size: 32,
             logo: 486296
           },
-        ]
+        ],
+        league: {
+          valid: false
+        }
       }]
     }
   ])
@@ -119,7 +131,10 @@ app.post('/api/gamefinder/coachteams', (req, res) => {
     teams: [
       {
         id: 1,
+        coach: 'HimalayaP1C7',
         name: 'Team1',
+        canLfg: 'Yes',
+        status: 'Active',
         teamValue: 1230000,
         race: 'Tomb Kings',
         raceLogos: [
@@ -127,11 +142,17 @@ app.post('/api/gamefinder/coachteams', (req, res) => {
             size: 32,
             logo: 486296
           },
-        ]
+        ],
+        league: {
+          valid: false
+        }
       },
       {
         id: 2,
+        coach: 'HimalayaP1C7',
         name: 'Team2',
+        canLfg: 'Yes',
+        status: 'Active',
         teamValue: 1830000,
         race: 'Tomb Kings',
         raceLogos: [
@@ -139,7 +160,10 @@ app.post('/api/gamefinder/coachteams', (req, res) => {
             size: 32,
             logo: 486296
           },
-        ]
+        ],
+        league: {
+          valid: false
+        }
       }
     ]
   })
