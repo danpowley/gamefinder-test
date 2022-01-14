@@ -193,13 +193,15 @@ class Database {
     this.offers.push(offerData)
   }
 
-  getOffers() {
+  getOffers(coachName) {
     const unexpiredOffers = []
 
     for (const offer of this.offers) {
       const timeRemaining = (offer.created + offer.lifetime) - Date.now()
       offer.timeRemaining = timeRemaining
-      if (timeRemaining > 0) {
+
+      const offerBelongsToCoach = offer.team1.coach.name === coachName || offer.team2.coach.name === coachName
+      if (offerBelongsToCoach && timeRemaining > 0) {
         unexpiredOffers.push(offer)
       }
     }

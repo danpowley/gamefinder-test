@@ -42,7 +42,8 @@ app.post('/api/gamefinder/teams', (req, res) => {
 
 // used by getOffers to show all the offers
 app.post('/api/gamefinder/getoffers', (req, res) => {
-  const offers = db.getOffers()
+  const coachName = req.body.cheatingCoachName
+  const offers = db.getOffers(coachName)
   res.send(offers)
 })
 

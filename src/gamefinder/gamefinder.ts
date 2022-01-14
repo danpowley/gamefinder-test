@@ -68,7 +68,7 @@ export default class App extends Vue {
 
     private async getOffers() {
         const pre = Date.now();
-        const offers: any = await Axios.post('/api/gamefinder/getoffers');
+        const offers: any = await Axios.post('/api/gamefinder/getoffers', {cheatingCoachName: this.coachName});
         const now = Date.now();
 
         const avgTime = now / 2 + pre / 2;
