@@ -44,7 +44,7 @@ class Database {
       id: id,
       coach: coachName,
       name: 'Team' + id,
-      isLfg: 'No',
+      isLfg: 'Yes',
       canLfg: 'Yes',
       status: 'Active',
       teamValue: 1230000,
@@ -156,7 +156,7 @@ class Database {
   }
 
   createOffer(myTeamId, opponentTeamId) {
-    const offerLifetime = 5000
+    const offerLifetime = 30000
 
     const myTeam = this.getTeam(myTeamId)
     const opponentTeam = this.getTeam(opponentTeamId)
