@@ -18,6 +18,21 @@ app.get('/', function(req, res) {
   res.render('pages/index');
 });
 
+
+// HELPERS
+function getRandomInteger(max) {
+  return Math.floor(Math.random() * max)
+}
+
+function getRandomId() {
+  return getRandomInteger(1000000)
+}
+
+// DATA
+const offers = []
+
+
+
 // used to display an opponents team data when you hover over it
 app.post('/api/team/get/:teamId', (req, res) => {
   res.send({
@@ -111,11 +126,31 @@ app.post('/api/gamefinder/teams', (req, res) => {
   ])
 })
 
-// post("/api/gamefinder/getoffers")
+// used by getOffers to show all the offers
 app.post('/api/gamefinder/getoffers', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+
+  const unexpiredOffers = []
+
+  for (const offer of offers) {
+    timeRemaining = (offer.created + offer.lifetime) - Date.now()
+    offer.timeRemaining = timeRemaining
+    if (timeRemaining > 0) {
+      unexpiredOffers.push(offer)
+    }
+  }
+
+  res.send(unexpiredOffers)
+})
+
+// used by cancelOffer to remove an offer from the offers array
+app.post('/api/gamefinder/canceloffer/:offerId', (req, res) => {
+  const offerId = ~~req.params.offerId
+  let index = offers.findIndex((o) => o.id === offerId);
+  if (index !== -1) {
+      offers.splice(index, 1);
+  }
+
+  res.send(true)
 })
 
 // post("/api/gamefinder/activate")
@@ -171,10 +206,40 @@ app.post('/api/gamefinder/coachteams', (req, res) => {
 
 // post("/api/gamefinder/offer/" + e + "/" + t)
 app.post('/api/gamefinder/offer/:myTeamId/:opponentTeamId', (req, res) => {
-  res.send({
-    myTeamId: req.params.myTeamId,
-    opponentTeamId: req.params.opponentTeamId
-  })
+
+  const offerLifetime = 5000
+
+  const offerData = {
+    id: getRandomId(),
+    created: Date.now(),
+    timeRemaining: offerLifetime,
+    lifetime: offerLifetime,
+    team1: {
+      id: req.params.myTeamId,
+      name: 'Offer team 1',
+      teamValue: 1000000,
+      race: {
+        name: 'Orcs'
+      },
+      coach: {
+        name: 'HimalayP1C7'
+      }
+    },
+    team2: {
+      id: req.params.opponentTeamId,
+      name: 'Offer team 2',
+      teamValue: 1100000,
+      race: {
+        name: 'Goblins'
+      },
+      coach: {
+        name: 'bobbo'
+      }
+    }
+  }
+  offers.push(offerData)
+
+  res.send(true)
 })
 
 // post("/api/gamefinder/addteam/" + r)
