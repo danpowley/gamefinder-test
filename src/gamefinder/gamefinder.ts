@@ -100,8 +100,8 @@ export default class App extends Vue {
     }
 
     public async activate() {
-        await Axios.post('/api/gamefinder/activate')
-        const result = await Axios.post('/api/gamefinder/coachteams');
+        await Axios.post('/api/gamefinder/activate', {cheatingCoachName: this.coachName})
+        const result = await Axios.post('/api/gamefinder/coachteams', {cheatingCoachName: this.coachName});
         const activeTeams = result.data.teams;
 
         Util.applyDeepDefaults(activeTeams, [{
@@ -619,9 +619,9 @@ export default class App extends Vue {
         const checked = event.target.checked;
 
         if (checked) {
-            Axios.post('/api/gamefinder/addallteams');
+            Axios.post('/api/gamefinder/addallteams', {cheatingCoachName: this.coachName});
         } else {
-            Axios.post('/api/gamefinder/removeallteams');
+            Axios.post('/api/gamefinder/removeallteams', {cheatingCoachName: this.coachName});
         }
 
         const checkboxes = document.getElementsByClassName('teamcheck');

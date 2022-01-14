@@ -2,16 +2,18 @@ const express = require('express')
 var bodyParser = require('body-parser')
 const path = require('path');
 
+const Database = require('./Database')
+let db = new Database()
+
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// set the view engine to ejs
 app.set('view engine', 'ejs');
 
 app.set('views', path.join(__dirname, '/views'));
 
 app.use(express.static('dist'))
-app.use(bodyParser.json()) // parse application/json
+app.use(bodyParser.json())
 
 // index page
 app.get('/gamefinder/~:coachName', function(req, res) {
@@ -20,128 +22,29 @@ app.get('/gamefinder/~:coachName', function(req, res) {
   res.render('pages/index', {coachName: coachName});
 });
 
-
-// HELPERS
-function getRandomInteger(max) {
-  return Math.floor(Math.random() * max)
-}
-
-function getRandomId() {
-  return getRandomInteger(1000000)
-}
-
-// DATA
-const offers = []
-
-
-
 // used to display an opponents team data when you hover over it
 app.post('/api/team/get/:teamId', (req, res) => {
-  res.send({
-    name: 'Team100',
-    teamValue: 3000000,
-    rerolls: 3,
-    fanFactor: 4,
-    treasury: 150000,
-    roster: {
-      name: 'Tomb King'
-    },
-    players: [
-      {
-        injuries: '-MA,-ST',
-        position: 'Lineman',
-        skills: ['Block', 'Dodge']
-      }
-    ]
-  })
+  const team = db.getTeam(~~req.params.teamId)
+  res.send(team)
 })
 
 // this is used to set up the check box list of teams "Choose teams" link
 app.post('/api/coach/teams/:coachName', (req, res) => {
-  res.send({
-    teams: [
-      {
-        id: 1,
-        coach: req.params.coachName,
-        name: 'Team1',
-        canLfg: 'Yes',
-        status: 'Active',
-        teamValue: 1230000,
-        race: 'Tomb Kings',
-        raceLogos: [
-          {
-            size: 32,
-            logo: 486296
-          },
-        ],
-        league: {
-          valid: false
-        }
-      },
-      {
-        id: 2,
-        coach: req.params.coachName,
-        name: 'Team2',
-        canLfg: 'Yes',
-        status: 'Active',
-        teamValue: 1830000,
-        race: 'Tomb Kings',
-        raceLogos: [
-          {
-            size: 32,
-            logo: 486296
-          },
-        ],
-        league: {
-          valid: false
-        }
-      }
-    ]
-  })
+  const teams = db.getTeamsForChooseTeams(req.params.coachName)
+  res.send({teams: teams})
 })
 
 // used to get the teams available as opponents
 app.post('/api/gamefinder/teams', (req, res) => {
-  res.send([
-    {
-      name: 'bobbo',
-      ranking: 'Legend',
-      teams: [{
-        id: 1,
-        coach: 'bobbo',
-        name: 'Team100',
-        canLfg: 'Yes',
-        status: 'Active',
-        teamValue: 2000000,
-        race: 'Tomb Kings',
-        raceLogos: [
-          {
-            size: 32,
-            logo: 486296
-          },
-        ],
-        league: {
-          valid: false
-        }
-      }]
-    }
-  ])
+  const opponents = db.getOpponents()
+  res.send(opponents)
 })
 
 // used by getOffers to show all the offers
 app.post('/api/gamefinder/getoffers', (req, res) => {
-
-  const unexpiredOffers = []
-
-  for (const offer of offers) {
-    timeRemaining = (offer.created + offer.lifetime) - Date.now()
-    offer.timeRemaining = timeRemaining
-    if (timeRemaining > 0) {
-      unexpiredOffers.push(offer)
-    }
-  }
-
-  res.send(unexpiredOffers)
+  const coachName = req.body.cheatingCoachName
+  const offers = db.getOffers(coachName)
+  res.send(offers)
 })
 
 // used by cancelOffer to remove an offer from the offers array
@@ -155,121 +58,49 @@ app.post('/api/gamefinder/canceloffer/:offerId', (req, res) => {
   res.send(true)
 })
 
-// post("/api/gamefinder/activate")
+// not much for us to do here, presumably this marks the coach themselves as LFG
 app.post('/api/gamefinder/activate', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  db.addCoach(~~req.body.cheatingCoachName)
+  res.send(true)
 })
 
 // returns my teams activated for search
 app.post('/api/gamefinder/coachteams', (req, res) => {
-  res.send({
-    teams: [
-      {
-        id: 1,
-        coach: 'HimalayaP1C7',
-        name: 'Team1',
-        canLfg: 'Yes',
-        status: 'Active',
-        teamValue: 1230000,
-        race: 'Tomb Kings',
-        raceLogos: [
-          {
-            size: 32,
-            logo: 486296
-          },
-        ],
-        league: {
-          valid: false
-        }
-      },
-      {
-        id: 2,
-        coach: 'HimalayaP1C7',
-        name: 'Team2',
-        canLfg: 'Yes',
-        status: 'Active',
-        teamValue: 1830000,
-        race: 'Tomb Kings',
-        raceLogos: [
-          {
-            size: 32,
-            logo: 486296
-          },
-        ],
-        league: {
-          valid: false
-        }
-      }
-    ]
-  })
+  const coachName = req.body.cheatingCoachName
+  const teams = db.getTeamsIsLfg(coachName)
+  res.send({teams: teams})
 })
 
 // post("/api/gamefinder/offer/" + e + "/" + t)
 app.post('/api/gamefinder/offer/:myTeamId/:opponentTeamId', (req, res) => {
-
-  const offerLifetime = 5000
-
-  const offerData = {
-    id: getRandomId(),
-    created: Date.now(),
-    timeRemaining: offerLifetime,
-    lifetime: offerLifetime,
-    team1: {
-      id: req.params.myTeamId,
-      name: 'Offer team 1',
-      teamValue: 1000000,
-      race: {
-        name: 'Orcs'
-      },
-      coach: {
-        name: 'HimalayP1C7'
-      }
-    },
-    team2: {
-      id: req.params.opponentTeamId,
-      name: 'Offer team 2',
-      teamValue: 1100000,
-      race: {
-        name: 'Goblins'
-      },
-      coach: {
-        name: 'bobbo'
-      }
-    }
-  }
-  offers.push(offerData)
-
+  db.createOffer(~~req.params.myTeamId, ~~req.params.opponentTeamId)
   res.send(true)
 })
 
-// post("/api/gamefinder/addteam/" + r)
+// used to mark a team as isLfg=Yes
 app.post('/api/gamefinder/addteam/:teamId', (req, res) => {
-  res.send({
-    teamId: req.params.teamId
-  })
+  db.addTeam(~~req.params.teamId)
+  res.send(true)
 })
 
-// post("/api/gamefinder/removeteam/" + r)
+// used to mark a team as isLfg=No
 app.post('/api/gamefinder/removeteam/:teamId', (req, res) => {
-  res.send({
-    teamId: req.params.teamId
-  })
+  db.removeTeam(~~req.params.teamId)
+  res.send(true)
 })
 
-// post("/api/gamefinder/addallteams")
+// set all teams for coach isLfg=Yes
 app.post('/api/gamefinder/addallteams', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  const coachName = req.body.cheatingCoachName
+  db.setAllTeamsForCoachIsLfg(coachName, true)
+  res.send(true)
 })
 
-// post("/api/gamefinder/removeallteams")
+// set all teams for coach isLfg=No
 app.post('/api/gamefinder/removeallteams', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  const coachName = req.body.cheatingCoachName
+  db.setAllTeamsForCoachIsLfg(coachName, false)
+  res.send(true)
 })
 
 app.listen(PORT, () => {
