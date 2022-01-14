@@ -75,6 +75,7 @@ export default class App extends Vue {
 
         for (const offer of offers.data) {
             offer.expiry = avgTime + offer.timeRemaining;
+            offer.external = offer.team1.coach.name !== this.coachName
             // Swap teams if the first team is the opponent's
             if (offer.team2.coach.name === this.coachName) {
                 const x = offer.team1;
@@ -489,6 +490,7 @@ export default class App extends Vue {
             expiry: offerData.expiry,
             timeRemaining: offerData.timeRemaining,
             lifetime: offerData.lifetime,
+            external: offerData.external,
             hover: false,
             home: {
                 id: offerData.team1.id,
