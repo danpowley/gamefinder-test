@@ -14,8 +14,10 @@ app.use(express.static('dist'))
 app.use(bodyParser.json()) // parse application/json
 
 // index page
-app.get('/', function(req, res) {
-  res.render('pages/index');
+app.get('/gamefinder/~:coachName', function(req, res) {
+  const coachName = req.params.coachName
+  // pass coachName to view so it can be used by Vue app
+  res.render('pages/index', {coachName: coachName});
 });
 
 

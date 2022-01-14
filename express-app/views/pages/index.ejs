@@ -1,6 +1,6 @@
 <%- include('../partials/header'); %>
 
-<div class="gamefinder" id="vuecontent" coach="HimalayaP1C7">
+<div class="gamefinder" id="vuecontent" coach="<%= coachName %>">
     <div class="basicbox" v-show="display == 'teams'">
         <div class="header">Select Teams</div>
         <div class="content" id="teamswrapper">
@@ -24,7 +24,7 @@
         </div>
     </div>
     <div class="basicbox" v-show="display == 'lfg'">
-        <div class="header">Game Finder (UI/UX test page)</div>
+        <div class="header">Game Finder. Coach:<%= coachName %></div>
         <div class="content" id="wrapper">
 
             <div id="sidepanel">
