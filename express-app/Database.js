@@ -20,6 +20,7 @@ class Database {
 
     this.coaches.push(
       {
+        id: this.getRandomId(),
         name: coachName,
         ranking: 'Legend',
       }
@@ -144,7 +145,7 @@ class Database {
     for (const team of this.teams) {
       const coach = this.getCoach(team.coach)
       if (! opponents.has(team.coach)) {
-        opponents.set(coach.name, {name: coach.name, ranking: coach.ranking, teams: []})
+        opponents.set(coach.name, {id: coach.id, name: coach.name, ranking: coach.ranking, teams: []})
       }
 
       if (team.isLfg === 'Yes') {
