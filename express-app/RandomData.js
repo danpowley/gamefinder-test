@@ -107,7 +107,9 @@ class RandomData {
       roster: {
         name: race.imageId
       },
-      division: 'Competitive'
+      division: 'Competitive',
+      percentageLimit: true,
+      gamesPlayed: this.getArrayElement([0, 0, 0, 0, 0, 0, 0 , 0, 1, 1, 1, 1, 3, 3, 5, 6, 8, 10, 20, 50, 100])
     }
   }
 
