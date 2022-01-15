@@ -2,98 +2,108 @@ const express = require('express')
 var bodyParser = require('body-parser')
 const path = require('path');
 
+const Database = require('./Database')
+const RandomData = require('./RandomData')
+const randomData = new RandomData()
+const db = new Database(randomData)
+
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// set the view engine to ejs
 app.set('view engine', 'ejs');
 
 app.set('views', path.join(__dirname, '/views'));
 
 app.use(express.static('dist'))
-app.use(bodyParser.json()) // parse application/json
+app.use(bodyParser.json())
 
 // index page
-app.get('/', function(req, res) {
-  res.render('pages/index');
+app.get('/gamefinder/~:coachName', function(req, res) {
+  const coachName = req.params.coachName
+  // pass coachName to view so it can be used by Vue app
+  res.render('pages/index', {coachName: coachName});
 });
 
-// post("/api/team/get/" + a)
+// used to display an opponents team data when you hover over it
 app.post('/api/team/get/:teamId', (req, res) => {
-  res.send({
-    teamId: req.params.teamId
-  })
+  const team = db.getTeam(~~req.params.teamId)
+  res.send(team)
 })
 
-// post("/api/coach/teams/" + this.coachName)
+// this is used to set up the check box list of teams "Choose teams" link
 app.post('/api/coach/teams/:coachName', (req, res) => {
-  res.send({
-    coachName: req.params.coachName
-  })
+  const teams = db.getTeamsForChooseTeams(req.params.coachName)
+  res.send({teams: teams})
 })
 
-// post("/api/gamefinder/teams")
+// used to get the teams available as opponents
 app.post('/api/gamefinder/teams', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  const opponents = db.getOpponents()
+  res.send(opponents)
 })
 
-// post("/api/gamefinder/getoffers")
+// used by getOffers to show all the offers
 app.post('/api/gamefinder/getoffers', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  const coachName = req.body.cheatingCoachName
+  const offers = db.getOffers(coachName)
+  res.send(offers)
 })
 
-// post("/api/gamefinder/activate")
+// used by cancelOffer to remove an offer from the offers array
+app.post('/api/gamefinder/canceloffer/:offerId', (req, res) => {
+  const offerId = ~~req.params.offerId
+  let index = offers.findIndex((o) => o.id === offerId);
+  if (index !== -1) {
+      offers.splice(index, 1);
+  }
+
+  res.send(true)
+})
+
+// not much for us to do here, presumably this marks the coach themselves as LFG
 app.post('/api/gamefinder/activate', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  const coachName = req.body.cheatingCoachName
+  db.addCoach(coachName)
+  res.send(true)
 })
 
-// post("/api/gamefinder/coachteams")
+// returns my teams activated for search
 app.post('/api/gamefinder/coachteams', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  const coachName = req.body.cheatingCoachName
+  const teams = db.getTeamsIsLfg(coachName)
+  res.send({teams: teams})
 })
 
 // post("/api/gamefinder/offer/" + e + "/" + t)
 app.post('/api/gamefinder/offer/:myTeamId/:opponentTeamId', (req, res) => {
-  res.send({
-    myTeamId: req.params.myTeamId,
-    opponentTeamId: req.params.opponentTeamId
-  })
+  db.createOffer(~~req.params.myTeamId, ~~req.params.opponentTeamId)
+  res.send(true)
 })
 
-// post("/api/gamefinder/addteam/" + r)
+// used to mark a team as isLfg=Yes
 app.post('/api/gamefinder/addteam/:teamId', (req, res) => {
-  res.send({
-    teamId: req.params.teamId
-  })
+  db.addTeam(~~req.params.teamId)
+  res.send(true)
 })
 
-// post("/api/gamefinder/removeteam/" + r)
+// used to mark a team as isLfg=No
 app.post('/api/gamefinder/removeteam/:teamId', (req, res) => {
-  res.send({
-    teamId: req.params.teamId
-  })
+  db.removeTeam(~~req.params.teamId)
+  res.send(true)
 })
 
-// post("/api/gamefinder/addallteams")
+// set all teams for coach isLfg=Yes
 app.post('/api/gamefinder/addallteams', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  const coachName = req.body.cheatingCoachName
+  db.setAllTeamsForCoachIsLfg(coachName, true)
+  res.send(true)
 })
 
-// post("/api/gamefinder/removeallteams")
+// set all teams for coach isLfg=No
 app.post('/api/gamefinder/removeallteams', (req, res) => {
-  res.send({
-    foo: 'bar'
-  })
+  const coachName = req.body.cheatingCoachName
+  db.setAllTeamsForCoachIsLfg(coachName, false)
+  res.send(true)
 })
 
 app.listen(PORT, () => {

@@ -1,7 +1,130 @@
 <%- include('../partials/header'); %>
 
-<hr>
-<div id="app"></div>
-<hr>
+<div class="gamefinder" id="vuecontent" coach="<%= coachName %>">
+    <div class="basicbox" v-show="display == 'teams'">
+        <div class="header">Select Teams</div>
+        <div class="content" id="teamswrapper">
+            <div class="lfgList">
+                <template v-for="lfgteam in lfgTeams">
+                    <div class="lfgteam">
+                        <input class="teamcheck" type="checkbox" v-bind:value="lfgteam.id" v-model="checked" v-on:change="toggleTeam">
+                        <img :src="'https://fumbbl.com/i/' + lfgteam.raceLogos[0].logo" />
+                        <div class="teamname">{{ lfgteam.name }}</div>
+                        <div class="teaminfo">TV{{lfgteam.teamValue/1000}}k {{lfgteam.race}}</div>
+                    </div>
+                </template>
+            </div>
+            <div class="controls">
+                <div id="selectall">
+                    <input type="checkbox" id="all" v-on:change="toggleAll"/>
+                    <label for="all">Select All</label>
+                </div>
+                <input type="button" id="showlfg" value="Done" v-on:click="showLfg" />
+            </div>
+        </div>
+    </div>
+    <div class="basicbox" v-show="display == 'lfg'">
+        <div class="header">Game Finder. Coach: <%= coachName %></div>
+        <div class="content" id="wrapper">
+
+            <div id="sidepanel">
+                <div>
+                    Join the <a href="https://discord.gg/aUzsdgA">Discord</a> server to chat.
+                </div>
+                <div id="offerlist">
+                    <div class="title">Match Offers<span v-show="this.additionalOffers > 0"> (+{{this.additionalOffers}})</span></div>
+                    <div v-for="offer in offers" class="matchoffer" v-on:mouseover="offer.hover=true" v-on:mouseout="offer.hover=false">
+                        <div class="icon external" v-show="offer.external == true">?</div>
+                        <div class="icon accept" v-show="offer.hover && offer.external">&#x2714;</div>
+                        <div class="icon cancel" v-show="offer.hover" v-on:click="cancelOffer(offer)">&#x2718;</div>
+                       <div class="offeredteam home">
+                            <div class="name">
+                                {{ offer.home.team }}
+                            </div>
+                            <div class="desc">
+                                TV {{offer.home.tv}} {{offer.home.race}}
+                            </div>
+                        </div>
+                        <div class="timer" v-bind:style="{ width: (100 * offer.timeRemaining / offer.lifetime) + '%', left: (50 - 50 * offer.timeRemaining / offer.lifetime) + '%'}"></div>
+                        <div class="offeredteam away">
+                            <div class="desc">
+                                {{offer.away.race}} TV {{offer.away.tv}}
+                            </div>
+                            <div class="name">
+                                {{ offer.away.team }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="filters">
+                <div id="teamheader">
+                    Teams
+                </div>
+
+                Division / League:
+                <select id="division">
+                    <option>All</option>
+                    <optgroup label="Divisions">
+                        <option>Ranked</option>
+                        <option>League</option>
+                    </optgroup>
+                    <optgroup label="Leagues">
+                        <option>Some League</option>
+                        <option>Other League</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div v-if="showOfferButton" id="offer">
+                <input type="button" id="sendoffer" value="Send Offer" v-on:click="sendOffer" />
+            </div>
+
+            <div id="myteams">
+                <div class="title">My Teams <span id="teamslink">(<a href="#" v-on:click.prevent="showTeams">Choose Teams</a>)</span></div>
+                <template v-for="myteam in me.teams">
+                    <team v-bind:team="myteam"
+                          v-on:select="select" />
+                </template>
+            </div>
+
+            <div id="opponents">
+                <div class="title">Opponents</div>
+                <template v-for="opponent in opponents">
+                    <div class="coach" v-on:mouseover="opponent.hover=true" v-on:mouseout="opponent.hover=false">
+                        <a class="disclosure" v-on:click.prevent="expandOpponent(opponent)" href="#">
+                            <span v-if="opponent.expanded && showRanking(opponent)">&#x25bc;</span>
+                            <span v-else>&#x25b6;</span>
+                            {{ opponent.name }}
+                        </a>
+                    </div>
+                    <div v-show="opponent.expanded">
+                        <div class="ranking" v-show="showRanking(opponent)">{{ opponent.ranking }} (<a :href="opponent.url">Coach Page</a>)</div>
+                        <template v-for="oppteam in opponent.teams">
+                            <team v-bind:team="oppteam"
+                                  v-on:select="select"
+                                  v-on:hover="hover"
+                                  v-on:leave="leave"/>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <div id="roster">
+                <div id="rosterinfo">{{ rosterdata.name }}, TV {{ rosterdata.teamValue/1000 }}k <span v-if="rosterdata.roster">{{ rosterdata.roster.name }}</span></div>
+                <div id="teaminfo">{{ rosterdata.rerolls }} RR, {{rosterdata.fanFactor}} FF, {{ rosterdata.treasury/1000 }}k gold</div>
+                <table cellspacing="0" cellpadding="0" width="100%">
+                <template v-for="player in rosterdata.players">
+                    <tr>
+                        <td class="position">{{ player.position }}</td><td class="injuries">{{ player.injuries }}</td><td>{{ player.skills }}</td>
+                    </tr>
+                </template>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 <%- include('../partials/footer'); %>
