@@ -25,7 +25,7 @@ class Database {
       {
         id: this.randomData.getId(),
         name: coachName,
-        ranking: 'Legend',
+        ranking: this.randomData.getCoachLevel(),
       }
     )
 
