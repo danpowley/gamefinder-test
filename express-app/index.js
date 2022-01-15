@@ -3,7 +3,9 @@ var bodyParser = require('body-parser')
 const path = require('path');
 
 const Database = require('./Database')
-let db = new Database()
+const RandomData = require('./RandomData')
+const randomData = new RandomData()
+const db = new Database(randomData)
 
 const app = express()
 const PORT = process.env.PORT || 3000

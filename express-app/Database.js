@@ -1,11 +1,14 @@
 class Database {
+  randomData;
+
   coaches;
 
   teams;
 
   offers;
  
-  constructor() {
+  constructor(randomData) {
+    this.randomData = randomData
     this.coaches = []
     this.teams = []
     this.offers = []
@@ -20,59 +23,15 @@ class Database {
 
     this.coaches.push(
       {
-        id: this.getRandomId(),
+        id: this.randomData.getId(),
         name: coachName,
         ranking: 'Legend',
       }
     )
 
-    this.teams.push(this.createRandomTeam(coachName))
-    this.teams.push(this.createRandomTeam(coachName))
-    this.teams.push(this.createRandomTeam(coachName))
-  }
-
-  getRandomInteger(max) {
-    return Math.floor(Math.random() * max)
-  }
-  
-  getRandomId() {
-    return this.getRandomInteger(1000000)
-  }
-
-  createRandomTeam(coachName) {
-    const id = this.getRandomId()
-    return {
-      id: id,
-      coach: coachName,
-      name: 'Team' + id,
-      isLfg: 'Yes',
-      canLfg: 'Yes',
-      status: 'Active',
-      teamValue: 1230000,
-      race: 'Tomb Kings',
-      raceLogos: [
-        {
-          size: 32,
-          logo: 486296
-        },
-      ],
-      league: {
-        valid: false
-      },
-      players: [
-        {
-          injuries: '-MA,-ST',
-          position: 'Lineman',
-          skills: ['Block', 'Dodge']
-        }
-      ],
-      rerolls: 3,
-      fanFactor: 4,
-      treasury: 150000,
-      roster: {
-        name: 'Tomb King'
-      },
-    }
+    this.teams.push(this.randomData.getTeam(coachName))
+    this.teams.push(this.randomData.getTeam(coachName))
+    this.teams.push(this.randomData.getTeam(coachName))
   }
 
   getTeamsForChooseTeams(coachName) {
@@ -163,7 +122,7 @@ class Database {
     const opponentTeam = this.getTeam(opponentTeamId)
 
     const offerData = {
-      id: this.getRandomId(),
+      id: this.randomData.getId(),
       created: Date.now(),
       timeRemaining: offerLifetime,
       lifetime: offerLifetime,
