@@ -36,10 +36,22 @@ class Database {
     this.teams.push(this.randomData.getTeam(coachName))
     this.teams.push(this.randomData.getLeagueDivisionTeam(coachName))
     this.teams.push(this.randomData.getLeagueDivisionTeam(coachName))
-    this.teams.push(this.randomData.getLeagueTeam(coachName, 'Robot Pirate League'))
-    this.teams.push(this.randomData.getLeagueTeam(coachName, 'Robot Pirate League'))
-    this.teams.push(this.randomData.getLeagueTeam(coachName, 'Chaotic Wizard League'))
-    this.teams.push(this.randomData.getLeagueTeam(coachName, 'Chaotic Wizard League'))
+    const robotPirateLeague = {
+      id: 1,
+      name: 'Robot Pirate League',
+      valid: true,
+      ruleset: {id: 1, options: {'rulesetOptions.crossLeagueMatches': false}},
+    }
+    const chaoticWizardLeague = {
+      id: 2,
+      name: 'Chaotic Wizard League',
+      valid: true,
+      ruleset: {id: 1, options: {'rulesetOptions.crossLeagueMatches': false}},
+    }
+    this.teams.push(this.randomData.getLeagueTeam(coachName, robotPirateLeague))
+    this.teams.push(this.randomData.getLeagueTeam(coachName, robotPirateLeague))
+    this.teams.push(this.randomData.getLeagueTeam(coachName, chaoticWizardLeague))
+    this.teams.push(this.randomData.getLeagueTeam(coachName, chaoticWizardLeague))
   }
 
   getTeamsForChooseTeams(coachName) {

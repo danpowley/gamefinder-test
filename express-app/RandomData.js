@@ -103,10 +103,10 @@ class RandomData {
     return team
   }
 
-  getLeagueTeam(coachName, league) {
+  getLeagueTeam(coachName, leagueObject) {
     const team = this.getTeam(coachName)
     team.division = 'League'
-    team.league = {id: this.getId(), name: league}
+    team.league = leagueObject
     return team
   }
 
