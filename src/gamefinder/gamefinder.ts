@@ -398,7 +398,7 @@ export default class App extends Vue {
             opponent.visibleTeams = numVisibleTeams;
         });
         var previousDivision = false;
-        var previousLeague = false;
+        var previousLeagueId = false;
         for (let myTeam of this.me.teams) {
             myTeam.showDivisionHeader = false;
             myTeam.showLeagueHeader = false;
@@ -407,8 +407,8 @@ export default class App extends Vue {
                 myTeam.showDivisionHeader = true;
             }
 
-            if (myTeam.division === 'League' && previousLeague !== myTeam.league) {
-                previousLeague = myTeam.league;
+            if (myTeam.division === 'League' && previousLeagueId !== myTeam.league.id) {
+                previousLeagueId = myTeam.league.id;
                 myTeam.showLeagueHeader = true;
             }
             myTeam.fade = this.selectedOpponentTeam && !myTeam.allow.includes(this.selectedOpponentTeam.id);
