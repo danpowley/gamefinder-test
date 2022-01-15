@@ -32,6 +32,14 @@ class Database {
     this.teams.push(this.randomData.getTeam(coachName))
     this.teams.push(this.randomData.getTeam(coachName))
     this.teams.push(this.randomData.getTeam(coachName))
+    this.teams.push(this.randomData.getTeam(coachName))
+    this.teams.push(this.randomData.getTeam(coachName))
+    this.teams.push(this.randomData.getLeagueDivisionTeam(coachName))
+    this.teams.push(this.randomData.getLeagueDivisionTeam(coachName))
+    this.teams.push(this.randomData.getLeagueTeam(coachName, 'Robot Pirate League'))
+    this.teams.push(this.randomData.getLeagueTeam(coachName, 'Robot Pirate League'))
+    this.teams.push(this.randomData.getLeagueTeam(coachName, 'Chaotic Wizard League'))
+    this.teams.push(this.randomData.getLeagueTeam(coachName, 'Chaotic Wizard League'))
   }
 
   getTeamsForChooseTeams(coachName) {

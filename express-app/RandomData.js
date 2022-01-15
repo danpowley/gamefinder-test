@@ -93,7 +93,21 @@ class RandomData {
       roster: {
         name: race.imageId
       },
+      division: 'Competitive'
     }
+  }
+
+  getLeagueDivisionTeam(coachName) {
+    const team = this.getTeam(coachName)
+    team.division = 'League'
+    return team
+  }
+
+  getLeagueTeam(coachName, league) {
+    const team = this.getTeam(coachName)
+    team.division = 'League'
+    team.league = {id: this.getId(), name: league}
+    return team
   }
 
   getPlayers(playerCount) {
