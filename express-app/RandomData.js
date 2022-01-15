@@ -3,6 +3,20 @@ class RandomData {
   constructor() {
   }
 
+  getTeamName(divisionLetter, leagueName) {
+    let leaguePrefix = divisionLetter
+    if (leagueName) {
+      const initials = leagueName.split(' ').reduce((prev, curr) => prev += curr.charAt(0), '');
+      leaguePrefix = `${divisionLetter}:${initials}`
+    }
+    var randomWords = require('random-words');
+    const teamEndings = ['Utd', 'Reavers', 'Steeds', 'Mavericks', 'Falcons', 'Spurs', 'Hawks']
+    const teamWords = randomWords({min: 1, max: 2})
+    teamWords.push(this.getArrayElement(teamEndings))
+    const nameBody = teamWords.map((x) => x.charAt(0).toUpperCase() + x.slice(1)).join(' ')
+    return `[${leaguePrefix}] ${nameBody}`
+  }
+
   getInteger(max) {
     return Math.floor(Math.random() * max)
   }
@@ -71,7 +85,7 @@ class RandomData {
     return {
       id: id,
       coach: coachName,
-      name: 'Team' + id,
+      name: this.getTeamName('C', ''),
       isLfg: this.getYesNo(),
       canLfg: 'Yes',
       status: 'Active',
@@ -99,12 +113,14 @@ class RandomData {
 
   getLeagueDivisionTeam(coachName) {
     const team = this.getTeam(coachName)
+    team.name = this.getTeamName('L', ''),
     team.division = 'League'
     return team
   }
 
   getLeagueTeam(coachName, leagueObject) {
     const team = this.getTeam(coachName)
+    team.name = this.getTeamName('L', leagueObject.name),
     team.division = 'League'
     team.league = leagueObject
     return team
