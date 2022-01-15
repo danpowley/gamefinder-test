@@ -8,7 +8,7 @@
                 <template v-for="lfgteam in lfgTeams">
                     <div class="lfgteam">
                         <input class="teamcheck" type="checkbox" v-bind:value="lfgteam.id" v-model="checked" v-on:change="toggleTeam">
-                        <img :src="'/i/' + lfgteam.raceLogos[0].logo" />
+                        <img :src="'https://fumbbl.com/i/' + lfgteam.raceLogos[0].logo" />
                         <div class="teamname">{{ lfgteam.name }}</div>
                         <div class="teaminfo">TV{{lfgteam.teamValue/1000}}k {{lfgteam.race}}</div>
                     </div>

@@ -16,7 +16,7 @@ import Axios from 'axios'
                                      team: true}]"
                      v-on:click.prevent="selectTeam(team)"
                      v-on:mouseover="$emit('hover', $event, team)" v-on:mouseout="$emit('leave', $event, team)">
-                    <img class="logo" :src="'/i/' + actualLogo(team)" />
+                    <img class="logo" :src="'https://fumbbl.com/i/' + actualLogo(team)" />
                     <div class="name">{{ team.name }}</div>
                     <div class="info">TV {{ team.teamValue / 1000 }}k {{ team.race }}</div>
                 </div>
