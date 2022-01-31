@@ -17,6 +17,21 @@ app.set('views', path.join(__dirname, '/views'));
 app.use(express.static('dist'))
 app.use(bodyParser.json())
 
+const enableRandomEvents = true;
+if (enableRandomEvents) {
+  // add at least 1 coach
+  db.addCoach('Rando' + randomData.getId());
+  setInterval(function () {
+    // new coach
+    db.addCoach('Rando' + randomData.getId());
+  }, 5000);
+
+  setInterval(function () {
+    // new offers
+    db.createRandomOffer();
+  }, 2000);
+}
+
 // index page
 app.get('/gamefinder/~:coachName', function(req, res) {
   const coachName = req.params.coachName
