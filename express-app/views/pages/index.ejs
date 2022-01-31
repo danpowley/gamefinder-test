@@ -42,7 +42,7 @@
                                 TV {{offer.home.tv}} {{offer.home.race}}
                             </div>
                         </div>
-                        <div class="timer" v-bind:style="{ width: (100 * offer.timeRemaining / offer.lifetime) + '%', left: (50 - 50 * offer.timeRemaining / offer.lifetime) + '%'}"></div>
+                        <div class="timer" :style="{ width: (100 * offer.timeRemaining / offer.lifetime) + '%', left: (50 - 50 * offer.timeRemaining / offer.lifetime) + '%'}"></div>
                         <div class="offeredteam away">
                             <div class="desc">
                                 {{offer.away.race}} TV {{offer.away.tv}}
@@ -89,7 +89,7 @@
                 <div class="lfgList">
                     <template v-for="lfgteam in lfgTeams">
                         <div class="lfgteam">
-                            <input class="teamcheck" type="checkbox" v-bind:value="lfgteam.id" v-model="checked" v-on:change="toggleTeam">
+                            <input class="teamcheck" type="checkbox" :value="lfgteam.id" v-model="checked" v-on:change="toggleTeam">
                             <img :src="'https://fumbbl.com/i/' + lfgteam.raceLogos[0].logo" />
                             <div>
                                 <div class="teamname">{{ abbreviate(lfgteam.name, 70) }}</div>
@@ -153,7 +153,7 @@
                         </div>
                         <div v-show="isExpanded(opponent)">
                             <template v-for="oppTeam in opponent.teams">
-                                <div class="team" v-bind:class="[{fade: oppTeam.fade}]">
+                                <div class="team" :class="[{fade: oppTeam.fade}]">
                                     <div class="logo">
                                         <img :src="'https://fumbbl.com/i/' + teamLogo(oppTeam)" />
                                     </div>
