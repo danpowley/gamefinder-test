@@ -135,6 +135,15 @@ class Database {
     return Array.from(opponents.values())
   }
 
+  createRandomOffer() {
+    const lfgTeams = this.teams.filter((team) => team.isLfg === 'Yes');
+    const teamId1 = (lfgTeams[Math.floor(Math.random() * lfgTeams.length)]).id
+    const teamId2 = (lfgTeams[Math.floor(Math.random() * lfgTeams.length)]).id
+    if (teamId1 !== teamId2) {
+      this.createOffer(teamId1, teamId2)
+    }
+  }
+
   createOffer(myTeamId, opponentTeamId) {
     const offerLifetime = 30000
 
@@ -183,6 +192,7 @@ class Database {
       if (offerBelongsToCoach && timeRemaining > 0) {
         unexpiredOffers.push(offer)
       }
+
     }
 
     return unexpiredOffers
