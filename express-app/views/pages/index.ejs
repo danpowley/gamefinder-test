@@ -133,7 +133,7 @@
         </div>
 
         <div id="opponentslist" v-if="display == 'lfg'" @mouseenter="setHoverBlock('OPPONENTS')" @mouseleave="setHoverBlock(null)">
-            <div class="expandcollapseall"><a href="#" @click.prevent="expandAllOpponents()">Expand</a> <a href="#" @click.prevent="collapseAllOpponents()">Collapse</a></div>
+            <div class="expandcollapseall" v-show="visibleOpponents.length > 0"><a href="#" @click.prevent="expandAllOpponents()">Expand</a> <a href="#" @click.prevent="collapseAllOpponents()">Collapse</a></div>
             <div>
                 <strong>{{ selectedOwnTeam ? 'Opponents filtered by selected team.' : 'All opponents on Gamefinder' }}</strong>
             </div>
