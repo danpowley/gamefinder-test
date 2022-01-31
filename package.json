@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
+    "build": "webpack && lessc express-app/lfg2.less dist/bundle.css",
     "serve": "node express-app/index.js"
   },
   "author": "",

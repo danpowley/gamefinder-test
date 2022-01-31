@@ -1,0 +1,506 @@
+.gamefinder {
+  display: flex;
+  margin-top: 10px;
+
+  .basicbox {
+    margin: 0;
+
+    .content {
+      background: #f8f5e7;
+      overflow-y: auto;
+      padding: 7px;
+    }
+
+    .header {
+      font-size: 11pt;
+      background: #242;
+      color: #fff;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      padding: 1px 7px;
+    }
+  }
+
+  .leftside {
+    width: 250px;
+    flex-shrink: 0;
+  }
+
+  .rightside {
+    margin-left: 10px;
+    flex-grow: 1;
+  }
+
+  .additionaloffers {
+    font-size: 9pt;
+    float: right;
+  }
+
+  #offerlist {
+    min-height: 80px;
+    .matchoffer {
+      position: relative;
+      padding-bottom: 5px;
+      margin-bottom: 5px;
+      border-bottom: solid #2f2f2f 1px;
+
+      &:last-child {
+        border-bottom-style: none;
+      }
+
+      .timer {
+        position: absolute;
+        top: 50%;
+        margin-top: -4px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: #090;
+      }
+
+      .icon {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 15px;
+        border-radius: 10px;
+        width: 20px;
+        height: 20px;
+        text-align: center;
+        cursor: pointer;
+
+        &.cancel {
+          display: none;
+          border: solid #900 2px;
+          background: #900;
+          color: #fff;
+          z-index: 1;
+        }
+
+        &.external {
+          display: block;
+          border: solid #009 2px;
+          background: #009;
+          color: #fff;
+        }
+
+        &.accept {
+          display: none;
+          right: 23px;
+          border: solid #090 2px;
+          background: #090;
+          color: #fff;
+        }
+      }
+
+      &:hover {
+        .icon {
+          &.cancel {
+            display: block;
+          }
+
+          &.external {
+            display: none;
+          }
+
+          &.accept {
+            display: block;
+          }
+        }
+      }
+    }
+
+    .offeredteam {
+      &.home {
+        text-align: left !important;
+      }
+
+      &.away {
+        text-align: right !important;
+      }
+
+      .name {
+        font-size: 10pt;
+        font-weight: 700;
+      }
+
+      .desc {
+        font-size: 9pt;
+        font-style: oblique;
+        font-weight: 400;
+      }
+    }
+  }
+
+  #teamswrapper {
+    padding: 0;
+
+    .lfgteam {
+      border-bottom: solid #030 1px;
+      height: 38px;
+      padding: 2px;
+      display: flex;
+
+      input {
+        vertical-align: middle;
+        display: inline-block;
+        margin-right: 10px;
+      }
+
+      img {
+        margin-right: 10px;
+      }
+
+      .teamname {
+        font-size: 10pt;
+      }
+
+      .teaminfo {
+        font-size: 9pt;
+        font-style: oblique;
+      }
+    }
+
+    .controls {
+      position: relative;
+      padding: 10px;
+      text-align: center;
+
+      #selectall {
+        position: absolute;
+        left: 0;
+        vertical-align: middle;
+        display: inline-block;
+      }
+    }
+  }
+
+  .miniteams {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 2px;
+
+    .miniteam {
+      width: 110px;
+      display: flex;
+      flex-wrap: wrap;
+      margin-right: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      user-select: none;
+      border: solid 2px #e6ddc7;
+      font-size: 9pt;
+      background-color: #f8f5e7;
+
+      &.active, &:hover {
+        background-color: white;
+      }
+
+      &.active {
+        border-color: #242 !important;
+      }
+
+      &:hover {
+        border-color: #A10005;
+      }
+
+      .logo {
+        padding: 3px;
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+        padding-right: 3px;
+        display: flex;
+        align-items: center;
+      }
+
+      .data {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+
+        .tv {
+          flex-grow: 1;
+          border-top-right-radius: 5px;
+          padding: 0;
+          border-bottom: solid #242 1px;
+          margin: 2px 4px 0 0;
+
+          .divisionletter {
+            float: right;
+          }
+        }
+
+        .teams {
+          flex-grow: 1;
+          border-bottom-right-radius: 5px;
+          margin: 2px 4px 1px 0;
+
+          .teamsvalue {
+            float: right;
+            min-width: 15px;
+            text-align: right;
+
+            .unreadicon {
+              display: inline-block;
+              color: lighten(#1A401C, 20%);
+              font-size: 9pt;
+              padding-right: 1px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .activeteam {
+    margin-top: 4px;
+    display: flex;
+    padding: 6px;
+    background-color: #f8f5e7;
+    min-height: 50px;
+
+    .logo {
+      padding: 4px 4px 2px 0px;
+    }
+
+    .details {
+      flex-grow: 1;
+
+      .teamname {
+        font-size: 11pt;
+      }
+
+      .teaminfo {
+        font-style: oblique;
+        font-size: 9pt;
+      }
+    }
+
+    .teamtabs {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      .links {
+        display: flex;
+        column-gap: 10px;
+      }
+    }
+
+    .divisionleagueinfo {
+      text-align: right;
+      font-size: 8pt;
+      font-style: oblique;
+    }
+  }
+
+  .opponents {
+    margin-top: 6px;
+    background-color: #f8f5e7;
+    padding: 6px; // here
+
+    .coach {
+      line-height: 1.5em;
+      font-size: 10pt;
+
+      a.disclosure {
+        display: inline-block;
+        height: 1em;
+        text-align: center;
+        text-decoration: none;
+
+        .showhideicon {
+          color: black;
+          min-width: 14px;
+          display: inline-block;
+        }
+      }
+
+      .teamcount {
+        color: #2f2f2f;
+        padding: 1px 1px 1px 1px;
+        font-size: 8pt;
+        min-width: 15px;
+        display: inline-block;
+        line-height: 1em;
+        margin-top: 3px;
+        border-radius: 3px;
+        border: solid #999999 1px;
+      }
+
+      .ranking {
+        font-style: oblique;
+        font-size: 10pt;
+      }
+    }
+
+    .team {
+      margin-left: 1em;
+      display: flex;
+      border: solid #f8f5e7 1px;
+
+      .logo {
+        margin: 2px 5px 2px 4px;
+
+        img {
+          width: 28px;
+          height: auto;
+        }
+      }
+
+      .details {
+        flex-grow: 1;
+
+        .name {
+          font-size: 11pt;
+        }
+
+        .info {
+          font-style: oblique;
+
+          .offeredtag {
+            display: inline-block;
+            margin-top: 2px;
+            padding: 0 4px 1px 2px;
+            background-color: #2f2f2f;
+            color: white;
+            font-size: 7pt;
+          }
+        }
+      }
+
+      &.fade {
+        display: none;
+      }
+
+      &:hover {
+        background: #fff;
+        border: solid #242 1px;
+      }
+
+      .links {
+        display: none;
+
+        a:link {
+          text-decoration: none;
+        }
+      }
+
+      &:hover .links {
+        flex-shrink: 1;
+        display: flex;
+        list-style: none;
+        align-items: center;
+        column-gap: 15px;
+        font-size: 12pt;
+        margin: 0 10px 0 0;
+      }
+    }
+  }
+
+  .mixin_modalouter {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 50px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .mixin_modalinner {
+    position: relative;
+    background-color: white;
+    padding: 10px;
+    margin: auto;
+    width: 750px;
+    max-height: 90%;
+    overflow: auto;
+    border-radius: 5px;
+
+    .closemodal {
+      position: absolute;
+      top: 2px;
+      right: 10px;
+      color: #999999;
+      font-weight: 700;
+      font-size: 20pt;
+
+      &:hover {
+        color: #2f2f2f;
+        text-decoration: none;
+      }
+    }
+  }
+
+  .rosterouter {
+    .mixin_modalouter();
+    .rosterinner {
+      .mixin_modalinner();
+      table {
+        border-top: solid 1px #030;
+        padding: 0;
+        margin: 0;
+
+        td {
+          padding: 0 5px;
+          margin: 0;
+          border-top: solid 1px #ddd;
+
+          &.position {
+            white-space: nowrap;
+            width: 30%;
+          }
+
+          &.injuries {
+            width: 10%;
+          }
+        }
+      }
+
+      .rosterinfo {
+        font-weight: 700;
+      }
+
+      .teaminfo {
+        font-style: oblique;
+      }
+    }
+  }
+
+  .settingstitle {
+    font-size: 12pt;
+    border-bottom: solid #2f2f2f 1px;
+    margin-bottom: 10px;
+  }
+
+  .settingssection {
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+    border-bottom: solid #999999 1px;
+  }
+
+  .settingsouter {
+    .mixin_modalouter();
+    .settingsinner {
+      .mixin_modalinner();
+
+
+    }
+  }
+
+  .teamsettingsouter {
+    .mixin_modalouter();
+    .teamsettingsinner {
+      .mixin_modalinner();
+    }
+  }
+}
