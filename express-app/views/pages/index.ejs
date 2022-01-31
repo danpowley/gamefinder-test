@@ -142,7 +142,7 @@
                     <a class="disclosure" @click.prevent="expandOpponent(opponent)" href="#">
                         <span class="showhideicon" v-if="isExpanded(opponent)">&#x25bc;</span>
                         <span class="showhideicon" v-else>&#x25b6;</span>
-                        <span class="teamcount" title="Teams listed for this opponent">{{ opponent.teams.filter((o) => !o.fade).length }}</span>
+                        <span class="teamcount" title="Teams listed for this opponent">{{ opponent.teams.filter((o) => o.visible).length }}</span>
                         {{ opponent.name }}
                     </a>
                     <span class="ranking">
@@ -150,7 +150,7 @@
                     </span>
                 </div>
                 <div v-show="isExpanded(opponent)">
-                    <div v-for="oppTeam in opponent.teams" :key="oppTeam.id" class="team" :class="[{fade: oppTeam.fade}]">
+                    <div v-for="oppTeam in opponent.teams" v-if="oppTeam.visible" :key="oppTeam.id" class="team">
                         <div class="logo">
                             <img :src="'https://fumbbl.com/i/' + teamLogo(oppTeam)" />
                         </div>

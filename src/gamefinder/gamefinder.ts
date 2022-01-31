@@ -48,7 +48,7 @@ export default class App extends Vue {
             showAll: false,
             url: (opp: any) => '/~' + encodeURIComponent(opp.name),
             teams: [{
-                fade: false,
+                visible: false,
                 selected: false,
                 isOwn: false,
                 showDivisionHeader: false,
@@ -110,7 +110,6 @@ export default class App extends Vue {
         const activeTeams = result.data.teams;
 
         Util.applyDeepDefaults(activeTeams, [{
-            fade: false,
             selected: false,
             isOwn: true,
             showDivisionHeader: false,
@@ -416,8 +415,13 @@ export default class App extends Vue {
         this.opponentMap.forEach(opponent => {
             let numVisibleTeams = 0;
             for (let oppTeam of opponent.teams) {
-                oppTeam.fade = this.selectedOwnTeam && !this.selectedOwnTeam.allow.includes(oppTeam.id);
-                if (!oppTeam.fade) {
+                if (this.selectedOwnTeam) {
+                    oppTeam.visible = this.selectedOwnTeam.allow.includes(oppTeam.id);
+                } else {
+                    oppTeam.visible = true;
+                }
+
+                if (oppTeam.visible) {
                     numVisibleTeams++;
                 }
             }
@@ -437,7 +441,6 @@ export default class App extends Vue {
                 previousLeagueId = myTeam.league.id;
                 myTeam.showLeagueHeader = true;
             }
-            myTeam.fade = this.selectedOpponentTeam && !myTeam.allow.includes(this.selectedOpponentTeam.id);
         }
     }
 
