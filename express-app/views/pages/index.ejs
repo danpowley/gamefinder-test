@@ -30,10 +30,10 @@
                     <div class="nooffers">Sorry, no current offers.</div>
                 </template>
                 <div id="offerlist" @mouseenter="setHoverBlock('OFFERS')" @mouseleave="setHoverBlock(null)">
-                    <div v-for="offer in offers" class="matchoffer">
+                    <div v-for="offer in offers" :key="offer.id" class="matchoffer">
                         <div class="icon external" v-show="offer.external">?</div>
                         <div class="icon accept" v-show="offer.external">&#x2714;</div>
-                        <div class="icon cancel" v-on:click="cancelOffer(offer)">&#x2718;</div>
+                        <div class="icon cancel" @click="cancelOffer(offer)">&#x2718;</div>
                         <div class="offeredteam home">
                             <div class="name">
                                 {{ abbreviate(offer.home.team, 30) }}
@@ -61,25 +61,28 @@
 
         <div id="overallstatus">
             <%= coachName %>: You have {{ me.teams.length }} team{{ me.teams.length === 1 ? '' : 's' }} looking for a game.
-            <div class="overalllinks"><a href="#" v-on:click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModalSettings">Settings</a></div>
+            <div class="overalllinks"><a href="#" @click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModalSettings">Settings</a></div>
         </div>
 
         <div id="teamcards" v-show="display == 'lfg'">
 
-            <template v-for="myTeam in me.teams">
-                <div class="teamcard" :class="{active: myTeam.selected}" @click="selectTeam(myTeam)" :title="myTeam.name + '\n' + myTeam.race + '\n' + myTeam.division + (myTeam.league.name !== undefined ? ' (' + myTeam.league.name + ')' : '')">
-                    <div class="cardlogo"><img :src="'https://fumbbl.com/i/' + myTeam.raceLogos[0].logo"></div>
-                    <div class="cardinfo">
-                        <div class="teaminfo"><div class="divisionletter">[{{ myTeam.division.charAt(0) }}{{ myTeam.league.name ? '*' : '' }}]</div>{{ myTeam.teamValue/1000 }}k</div>
-                        <div class="opponentinfo">
-                            Oppo:
-                            <div class="allowedopponents" :title="myTeam.allow.length + ' possible opponents'">
-                                <span class="newopponentsicon" v-show="myTeam.hasUnreadItems">&#9679</span>{{ myTeam.allow.length }}
-                            </div>
+            <div v-for="myTeam in me.teams" :key="myTeam.id" @click="selectTeam(myTeam)"
+                class="teamcard" :class="{active: myTeam.selected}"
+                :title="myTeam.name + '\n' + myTeam.race + '\n' + myTeam.division + (myTeam.league.name !== undefined ? ' (' + myTeam.league.name + ')' : '')">
+                <div class="cardlogo"><img :src="'https://fumbbl.com/i/' + myTeam.raceLogos[0].logo"></div>
+                <div class="cardinfo">
+                    <div class="teaminfo">
+                        <div class="divisionletter">[{{ myTeam.division.charAt(0) }}{{ myTeam.league.name ? '*' : '' }}]</div>{{
+                        myTeam.teamValue/1000 }}k
+                    </div>
+                    <div class="opponentinfo">
+                        Oppo:
+                        <div class="allowedopponents" :title="myTeam.allow.length + ' possible opponents'">
+                            <span class="newopponentsicon" v-show="myTeam.hasUnreadItems">&#9679</span>{{ myTeam.allow.length }}
                         </div>
                     </div>
                 </div>
-            </template>
+            </div>
 
         </div>
 
@@ -87,23 +90,21 @@
             <div class="header">Select Teams</div>
             <div class="content" id="teamswrapper">
                 <div class="lfgList">
-                    <template v-for="lfgteam in lfgTeams">
-                        <div class="lfgteam">
-                            <input class="teamcheck" type="checkbox" :value="lfgteam.id" v-model="checked" v-on:change="toggleTeam">
-                            <img :src="'https://fumbbl.com/i/' + lfgteam.raceLogos[0].logo" />
-                            <div>
-                                <div class="teamname">{{ abbreviate(lfgteam.name, 70) }}</div>
-                                <div class="teaminfo"><span title="Seasons and games played">S{{ lfgteam.currentSeason }}:G{{ lfgteam.gamesPlayedInSeason }}</span> TV{{ lfgteam.teamValue/1000 }}k {{ lfgteam.race }}</div>
-                            </div>
+                    <div v-for="lfgTeam in lfgTeams" :key="lfgTeam.id" class="lfgteam">
+                        <input class="teamcheck" type="checkbox" :value="lfgTeam.id" v-model="checked" @change="toggleTeam">
+                        <img :src="'https://fumbbl.com/i/' + lfgTeam.raceLogos[0].logo" />
+                        <div>
+                            <div class="teamname">{{ abbreviate(lfgTeam.name, 70) }}</div>
+                            <div class="teaminfo"><span title="Seasons and games played">S{{ lfgTeam.currentSeason }}:G{{ lfgTeam.gamesPlayedInSeason }}</span> TV{{ lfgTeam.teamValue/1000 }}k {{ lfgTeam.race }}</div>
                         </div>
-                    </template>
+                    </div>
                 </div>
                 <div class="controls">
                     <div id="selectall">
-                        <input type="checkbox" id="all" v-on:change="toggleAll"/>
+                        <input type="checkbox" id="all" @change="toggleAll"/>
                         <label for="all">Select All</label>
                     </div>
-                    <input type="button" id="showlfg" value="Done" v-on:click="showLfg" />
+                    <input type="button" id="showlfg" value="Done" @click="showLfg" />
                 </div>
             </div>
         </div>
@@ -138,51 +139,47 @@
                 <strong>{{ selectedOwnTeam ? 'Opponents filtered by selected team.' : 'All opponents on Gamefinder' }}</strong>
             </div>
             <template v-if="visibleOpponents.length > 0">
-                <template v-for="opponent in visibleOpponents">
-                    <div class="opponent">
-                        <div class="coach">
-                            <a class="disclosure" v-on:click.prevent="expandOpponent(opponent)" href="#">
-                                <span class="showhideicon" v-if="isExpanded(opponent)">&#x25bc;</span>
-                                <span class="showhideicon" v-else>&#x25b6;</span>
-                                <span class="teamcount" title="Teams listed for this opponent">{{ opponent.teams.filter((o) => !o.fade).length }}</span>
-                                {{ opponent.name }}
-                            </a>
-                            <span class="ranking">
-                                {{ opponent.ranking }}
-                            </span>
-                        </div>
-                        <div v-show="isExpanded(opponent)">
-                            <template v-for="oppTeam in opponent.teams">
-                                <div class="team" :class="[{fade: oppTeam.fade}]">
-                                    <div class="logo">
-                                        <img :src="'https://fumbbl.com/i/' + teamLogo(oppTeam)" />
-                                    </div>
-                                    <div class="details">
-                                        <div class="name">{{ abbreviate(oppTeam.name, 55) }}</div>
-                                        <div class="info">
-                                            <template v-if="offerExists(oppTeam)">
-                                                <span class="offeredtag">Offered</span>
-                                            </template>
-                                            <span title="Seasons and games played">S{{ oppTeam.currentSeason }}:G{{ oppTeam.gamesPlayedInSeason }}</span> TV {{ oppTeam.teamValue / 1000 }}k {{ oppTeam.race }}
-                                        </div>
-                                    </div>
-                                    <div class="links">
-                                        <template v-if="selectedOwnTeam">
-                                            <template v-if="offerExists(oppTeam)">
-                                                <span>Offered</span>
-                                            </template>
-                                            <template v-else>
-                                                <a href="#" @click.prevent="sendOffer(oppTeam)">Offer</a>
-                                            </template>
-                                            <a href="#">Hide</a>
-                                        </template>
-                                        <a href="#" @click.prevent="openModalRosterForTeamId(oppTeam.id)">Roster</a>
-                                    </div>
+                <div v-for="opponent in visibleOpponents" :key="opponent.id" class="opponent">
+                    <div class="coach">
+                        <a class="disclosure" @click.prevent="expandOpponent(opponent)" href="#">
+                            <span class="showhideicon" v-if="isExpanded(opponent)">&#x25bc;</span>
+                            <span class="showhideicon" v-else>&#x25b6;</span>
+                            <span class="teamcount" title="Teams listed for this opponent">{{ opponent.teams.filter((o) => !o.fade).length }}</span>
+                            {{ opponent.name }}
+                        </a>
+                        <span class="ranking">
+                            {{ opponent.ranking }}
+                        </span>
+                    </div>
+                    <div v-show="isExpanded(opponent)">
+                        <div v-for="oppTeam in opponent.teams" :key="oppTeam.id" class="team" :class="[{fade: oppTeam.fade}]">
+                            <div class="logo">
+                                <img :src="'https://fumbbl.com/i/' + teamLogo(oppTeam)" />
+                            </div>
+                            <div class="details">
+                                <div class="name">{{ abbreviate(oppTeam.name, 55) }}</div>
+                                <div class="info">
+                                    <template v-if="offerExists(oppTeam)">
+                                        <span class="offeredtag">Offered</span>
+                                    </template>
+                                    <span title="Seasons and games played">S{{ oppTeam.currentSeason }}:G{{ oppTeam.gamesPlayedInSeason }}</span> TV {{ oppTeam.teamValue / 1000 }}k {{ oppTeam.race }}
                                 </div>
-                            </template>
+                            </div>
+                            <div class="links">
+                                <template v-if="selectedOwnTeam">
+                                    <template v-if="offerExists(oppTeam)">
+                                        <span>Offered</span>
+                                    </template>
+                                    <template v-else>
+                                        <a href="#" @click.prevent="sendOffer(oppTeam)">Offer</a>
+                                    </template>
+                                    <a href="#">Hide</a>
+                                </template>
+                                <a href="#" @click.prevent="openModalRosterForTeamId(oppTeam.id)">Roster</a>
+                            </div>
                         </div>
                     </div>
-                </template>
+                </div>
             </template>
             <template v-else>
                 No opponents available.
@@ -193,14 +190,12 @@
     <div class="rosterouter" v-if="modalDisplayed == 'ROSTER'">
         <div class="rosterinner">
             <a href="#" class="closemodal" @click.prevent="closeModalRoster">&times;</a>
-            <div class="rosterinfo">{{ abbreviate(rosterdata.name, 30) }}, TV {{ rosterdata.teamValue/1000 }}k <span v-if="rosterdata.roster">{{ rosterdata.roster.name }}</span></div>
+            <div class="rosterinfo">{{ abbreviate(rosterdata.name, 60) }}, TV {{ rosterdata.teamValue/1000 }}k <span v-if="rosterdata.roster">{{ rosterdata.roster.name }}</span></div>
             <div class="teaminfo">{{ rosterdata.rerolls }} RR, {{rosterdata.fanFactor}} FF, {{ rosterdata.treasury/1000 }}k gold</div>
             <table cellspacing="0" cellpadding="0" width="100%">
-            <template v-for="player in rosterdata.players">
-                <tr>
-                    <td class="position">{{ player.position }}</td><td class="injuries">{{ player.injuries }}</td><td>{{ player.skills }}</td>
-                </tr>
-            </template>
+            <tr v-for="player in rosterdata.players">
+                <td class="position">{{ player.position }}</td><td class="injuries">{{ player.injuries }}</td><td>{{ player.skills }}</td>
+            </tr>
             </table>
         </div>
     </div>
