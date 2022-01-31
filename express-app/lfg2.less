@@ -3,7 +3,7 @@
   margin-top: 10px;
 
   .basicbox {
-    margin: 0;
+    margin: 0 0 10px 0;
 
     .content {
       background: #f8f5e7;
@@ -21,114 +21,137 @@
     }
   }
 
-  .leftside {
+  .leftcolumn {
     width: 250px;
     flex-shrink: 0;
   }
 
-  .rightside {
+  .rightcolumn {
     margin-left: 10px;
     flex-grow: 1;
   }
 
-  .additionaloffers {
-    font-size: 9pt;
-    float: right;
+  #blackboxwrapper {
+    .nextdraw {
+      margin-bottom: 10px;
+    }
+
+    .teamsready {
+      margin: 10px 0;
+    }
+
+    .infonote {
+      margin-top: 10px;
+    }
   }
 
-  #offerlist {
-    min-height: 80px;
-    .matchoffer {
-      position: relative;
-      padding-bottom: 5px;
-      margin-bottom: 5px;
-      border-bottom: solid #2f2f2f 1px;
+  #offerlistwrapper {
+    padding: 0;
 
-      &:last-child {
-        border-bottom-style: none;
-      }
+    .nooffers {
+      padding: 5px;
+    }
 
-      .timer {
-        position: absolute;
-        top: 50%;
-        margin-top: -4px;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        background: #090;
-      }
+    #offerlist {
+      min-height: 80px;
 
-      .icon {
-        position: absolute;
-        top: 2px;
-        right: 2px;
-        font-size: 15px;
-        border-radius: 10px;
-        width: 20px;
-        height: 20px;
-        text-align: center;
-        cursor: pointer;
+      .matchoffer {
+        position: relative;
+        padding: 5px;
+        margin-bottom: 5px;
+        border-bottom: solid #2f2f2f 1px;
 
-        &.cancel {
-          display: none;
-          border: solid #900 2px;
-          background: #900;
-          color: #fff;
-          z-index: 1;
+        &:last-child {
+          border-bottom-style: none;
         }
 
-        &.external {
-          display: block;
-          border: solid #009 2px;
-          background: #009;
-          color: #fff;
-        }
-
-        &.accept {
-          display: none;
-          right: 23px;
-          border: solid #090 2px;
+        .timer {
+          position: absolute;
+          top: 50%;
+          margin-top: -1px;
+          left: 0;
+          width: 100%;
+          height: 3px;
           background: #090;
-          color: #fff;
         }
-      }
 
-      &:hover {
         .icon {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          font-size: 15px;
+          border-radius: 10px;
+          width: 20px;
+          height: 20px;
+          text-align: center;
+          cursor: pointer;
+
           &.cancel {
-            display: block;
+            display: none;
+            border: solid #900 2px;
+            background: #900;
+            color: #fff;
+            z-index: 1;
           }
 
           &.external {
-            display: none;
+            display: block;
+            border: solid #009 2px;
+            background: #009;
+            color: #fff;
           }
 
           &.accept {
-            display: block;
+            display: none;
+            right: 23px;
+            border: solid #090 2px;
+            background: #090;
+            color: #fff;
           }
+        }
+
+        &:hover {
+          .icon {
+            &.cancel {
+              display: block;
+            }
+
+            &.external {
+              display: none;
+            }
+
+            &.accept {
+              display: block;
+            }
+          }
+        }
+      }
+
+      .offeredteam {
+        &.home {
+          text-align: left !important;
+        }
+
+        &.away {
+          text-align: right !important;
+        }
+
+        .name {
+          font-size: 10pt;
+          font-weight: 700;
+        }
+
+        .desc {
+          font-size: 9pt;
+          font-style: oblique;
+          font-weight: 400;
         }
       }
     }
 
-    .offeredteam {
-      &.home {
-        text-align: left !important;
-      }
-
-      &.away {
-        text-align: right !important;
-      }
-
-      .name {
-        font-size: 10pt;
-        font-weight: 700;
-      }
-
-      .desc {
-        font-size: 9pt;
-        font-style: oblique;
-        font-weight: 400;
-      }
+    .additionaloffers {
+      font-size: 9pt;
+      float: right;
     }
   }
 
@@ -175,12 +198,26 @@
     }
   }
 
-  .miniteams {
+  #overallstatus {
+    font-weight: bold;
+    font-size: 10pt;
+    margin-bottom: 4px;
+
+    .overalllinks {
+      float: right;
+
+      a {
+        margin-left: 10px;
+      }
+    }
+  }
+
+  #teamcards {
     display: flex;
     flex-wrap: wrap;
     row-gap: 2px;
 
-    .miniteam {
+    .teamcard {
       width: 110px;
       display: flex;
       flex-wrap: wrap;
@@ -204,7 +241,7 @@
         border-color: #A10005;
       }
 
-      .logo {
+      .cardlogo {
         padding: 3px;
         border-top-left-radius: 5px;
         border-bottom-left-radius: 5px;
@@ -213,14 +250,14 @@
         align-items: center;
       }
 
-      .data {
+      .cardinfo {
         flex-grow: 1;
         display: flex;
         flex-direction: column;
         border-top-right-radius: 5px;
         border-bottom-right-radius: 5px;
 
-        .tv {
+        .teaminfo {
           flex-grow: 1;
           border-top-right-radius: 5px;
           padding: 0;
@@ -232,17 +269,17 @@
           }
         }
 
-        .teams {
+        .opponentinfo {
           flex-grow: 1;
           border-bottom-right-radius: 5px;
           margin: 2px 4px 1px 0;
 
-          .teamsvalue {
+          .allowedopponents {
             float: right;
             min-width: 15px;
             text-align: right;
 
-            .unreadicon {
+            .newopponentsicon {
               display: inline-block;
               color: lighten(#1A401C, 20%);
               font-size: 9pt;
@@ -254,7 +291,7 @@
     }
   }
 
-  .activeteam {
+  #selectedownteam {
     margin-top: 4px;
     display: flex;
     padding: 6px;
@@ -265,7 +302,7 @@
       padding: 4px 4px 2px 0px;
     }
 
-    .details {
+    .teamdetails {
       flex-grow: 1;
 
       .teamname {
@@ -278,29 +315,37 @@
       }
     }
 
-    .teamtabs {
+    .teamextras {
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
 
-      .links {
+      .divisionleagueinfo {
+        text-align: right;
+        font-size: 8pt;
+        font-style: oblique;
+      }
+
+      .teamlinks {
         display: flex;
         column-gap: 10px;
       }
     }
-
-    .divisionleagueinfo {
-      text-align: right;
-      font-size: 8pt;
-      font-style: oblique;
-    }
   }
 
-  .opponents {
+  #opponentslist {
     margin-top: 6px;
     background-color: #f8f5e7;
     padding: 6px; // here
+
+    .expandcollapseall {
+      float: right;
+
+      a {
+        margin-left: 10px;
+      }
+    }
 
     .coach {
       line-height: 1.5em;

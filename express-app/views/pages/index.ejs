@@ -2,22 +2,22 @@
 
 <div class="gamefinder" id="vuecontent" coach="<%= coachName %>">
 
-    <div class="leftside">
-        <div v-if="featureFlags.blackbox" class="basicbox" style="margin-bottom: 10px;">
+    <div class="leftcolumn">
+        <div v-if="featureFlags.blackbox" class="basicbox">
             <div class="header">Blackbox</div>
-            <div class="content">
-                <div style="margin-bottom: 10px;">Next draw in <strong>~3 minutes</strong>.</div>
+            <div class="content" id="blackboxwrapper">
+                <div class="nextdraw">Next draw in <strong>~3 minutes</strong>.</div>
                 <template v-if="availableBlackboxTeams === 0">
-                    To play in Blackbox you first need to create a team in the Competitive division.
+                    <div>To play in Blackbox you first need to create a team in the Competitive division.</div>
                 </template>
                 <template v-else>
                     <template v-if="chosenBlackboxTeams > 0">
-                        <div style="margin: 10px 0;">You have <strong>{{ chosenBlackboxTeams }} teams</strong> ready to join the draw ({{ availableBlackboxTeams }} eligible teams in total).</div>
+                        <div class="teamsready">You have <strong>{{ chosenBlackboxTeams }} teams</strong> ready to join the draw ({{ availableBlackboxTeams }} eligible teams in total).</div>
                         <button>Join the draw</button>
                     </template>
                     <template v-else>
-                        <div style="margin-top: 10px;">How to join? The first step is to select your teams using the &quot;Choose teams&quot; link on the right. Once your teams are selected you'll see a button here to join the next draw.</div>
-                        <div style="margin-top: 10px;">Please note: only Competitive division teams can join Blackbox, you have {{ availableBlackboxTeams }} eligible teams in total.</div>
+                        <div class="infonote">How to join? The first step is to select your teams using the &quot;Choose teams&quot; link on the right. Once your teams are selected you'll see a button here to join the next draw.</div>
+                        <div class="infonote">Please note: only Competitive division teams can join Blackbox, you have {{ availableBlackboxTeams }} eligible teams in total.</div>
                     </template>
                 </template>
             </div>
@@ -25,9 +25,9 @@
 
         <div class="basicbox">
             <div class="header">Match Offers<div v-show="additionalOffers > 0" class="additionaloffers">Additional offers: {{ additionalOffers }}</div></div>
-            <div class="content">
+            <div class="content" id="offerlistwrapper">
                 <template v-if="offers.length === 0">
-                    Sorry, no current offers.
+                    <div class="nooffers">Sorry, no current offers.</div>
                 </template>
                 <div id="offerlist" @mouseenter="setHoverBlock('OFFERS')" @mouseleave="setHoverBlock(null)">
                     <div v-for="offer in offers" class="matchoffer">
@@ -57,24 +57,24 @@
         </div>
     </div>
 
-    <div class="rightside">
+    <div class="rightcolumn">
 
-        <div style="font-weight: bold; font-size: 10pt; margin-bottom: 4px;">
+        <div id="overallstatus">
             <%= coachName %>: You have {{ me.teams.length }} team{{ me.teams.length === 1 ? '' : 's' }} looking for a game.
-            <div style="float: right;"><a href="#" style="margin-right: 10px;" v-on:click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModalSettings">Settings</a></div>
+            <div class="overalllinks"><a href="#" v-on:click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModalSettings">Settings</a></div>
         </div>
 
-        <div class="miniteams" v-show="display == 'lfg'">
+        <div id="teamcards" v-show="display == 'lfg'">
 
             <template v-for="myTeam in me.teams">
-                <div class="miniteam" :class="{active: myTeam.selected}" @click="selectTeam(myTeam)" :title="myTeam.name + '\n' + myTeam.race + '\n' + myTeam.division + (myTeam.league.name !== undefined ? ' (' + myTeam.league.name + ')' : '')">
-                    <div class="logo"><img :src="'https://fumbbl.com/i/' + myTeam.raceLogos[0].logo"></div>
-                    <div class="data">
-                        <div class="tv"><div class="divisionletter">[{{ myTeam.division.charAt(0) }}{{ myTeam.league.name ? '*' : '' }}]</div>{{ myTeam.teamValue/1000 }}k</div>
-                        <div class="teams">
+                <div class="teamcard" :class="{active: myTeam.selected}" @click="selectTeam(myTeam)" :title="myTeam.name + '\n' + myTeam.race + '\n' + myTeam.division + (myTeam.league.name !== undefined ? ' (' + myTeam.league.name + ')' : '')">
+                    <div class="cardlogo"><img :src="'https://fumbbl.com/i/' + myTeam.raceLogos[0].logo"></div>
+                    <div class="cardinfo">
+                        <div class="teaminfo"><div class="divisionletter">[{{ myTeam.division.charAt(0) }}{{ myTeam.league.name ? '*' : '' }}]</div>{{ myTeam.teamValue/1000 }}k</div>
+                        <div class="opponentinfo">
                             Oppo:
-                            <div class="teamsvalue" :title="myTeam.allow.length + ' possible opponents'">
-                                <span class="unreadicon" v-show="myTeam.hasUnreadItems">&#9679</span>{{ myTeam.allow.length }}
+                            <div class="allowedopponents" :title="myTeam.allow.length + ' possible opponents'">
+                                <span class="newopponentsicon" v-show="myTeam.hasUnreadItems">&#9679</span>{{ myTeam.allow.length }}
                             </div>
                         </div>
                     </div>
@@ -108,18 +108,18 @@
             </div>
         </div>
 
-        <div class="activeteam" v-if="display == 'lfg'">
+        <div id="selectedownteam" v-if="display == 'lfg'">
             <template v-if="selectedOwnTeam">
                 <div class="logo">
                     <img :src="'https://fumbbl.com/i/' + selectedOwnTeam.raceLogos[0].logo" />
                 </div>
-                <div class="details">
+                <div class="teamdetails">
                     <div class="teamname"><a href="#" @click.prevent="openModalRoster">{{ abbreviate(selectedOwnTeam.name, 65) }}</a></div>
                     <div class="teaminfo"><span title="Seasons and games played">S{{ selectedOwnTeam.currentSeason }}:G{{ selectedOwnTeam.gamesPlayedInSeason }}</span> TV {{ selectedOwnTeam.teamValue/1000 }}k {{ selectedOwnTeam.race }}</div>
                 </div>
-                <div class="teamtabs">
+                <div class="teamextras">
                     <div class="divisionleagueinfo">{{ selectedOwnTeam.division }}</div>
-                    <div class="links">
+                    <div class="teamlinks">
                         <a href="#" @click.prevent="openModalTeamSettings">Settings</a>
                         <a href="#" @click.prevent="selectTeam(selectedOwnTeam)">Deselect</a>
                     </div>
@@ -132,10 +132,10 @@
             </template>
         </div>
 
-        <div class="opponents" v-if="display == 'lfg'" @mouseenter="setHoverBlock('OPPONENTS')" @mouseleave="setHoverBlock(null)">
+        <div id="opponentslist" v-if="display == 'lfg'" @mouseenter="setHoverBlock('OPPONENTS')" @mouseleave="setHoverBlock(null)">
+            <div class="expandcollapseall"><a href="#" @click.prevent="expandAllOpponents()">Expand</a> <a href="#" @click.prevent="collapseAllOpponents()">Collapse</a></div>
             <div>
                 <strong>{{ selectedOwnTeam ? 'Opponents filtered by selected team.' : 'All opponents on Gamefinder' }}</strong>
-                <div style="float: right;">Expand: <a href="#" @click.prevent="expandAllOpponents()">All</a> <a href="#" @click.prevent="collapseAllOpponents()">None</a></div>
             </div>
             <template v-if="visibleOpponents.length > 0">
                 <template v-for="opponent in visibleOpponents">
@@ -144,7 +144,7 @@
                             <a class="disclosure" v-on:click.prevent="expandOpponent(opponent)" href="#">
                                 <span class="showhideicon" v-if="isExpanded(opponent)">&#x25bc;</span>
                                 <span class="showhideicon" v-else>&#x25b6;</span>
-                                <span  class="teamcount" title="Teams listed for this opponent">{{ opponent.teams.filter((o) => !o.fade).length }}</span>
+                                <span class="teamcount" title="Teams listed for this opponent">{{ opponent.teams.filter((o) => !o.fade).length }}</span>
                                 {{ opponent.name }}
                             </a>
                             <span class="ranking">
