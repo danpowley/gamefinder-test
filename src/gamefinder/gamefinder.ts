@@ -1,14 +1,14 @@
-import Vue, { ComponentOptions } from "vue"
+import Vue from "vue"
 import Component from "vue-class-component"
 import { Util } from "../core/util"
 import Axios from "axios"
-import TeamComponent from "./components/team"
 
 @Component
 export default class App extends Vue {
     coachName:string|null = null;
 
-    private deferredOfferUpdate = false;
+    public hoverBlock: 'OFFERS' | 'OPPONENTS' | null = null;
+    public featureFlags = {blackbox: true};
 
     public selectedOwnTeam:any = false;
     public selectedOpponentTeam:any = false;
@@ -18,8 +18,8 @@ export default class App extends Vue {
     public pendingOpponents: any = [];
     public opponentMap:Map<string,any> = new Map<string,any>();
     public opponents:any = {};
-
-    private expandedOpponent:any = null;
+    public expandedForAllOpponents: number[] = [];
+    private readHistory:Map<number,number[]> = new Map<number,number[]>();
 
     public pendingOffers:any = [];
     public offers:any = [];
@@ -27,9 +27,10 @@ export default class App extends Vue {
     public additionalOffers: number = 0;
 
     public display: string = 'lfg';
+    public modalDisplayed: 'ROSTER' | 'SETTINGS' | 'TEAM_SETTINGS' | null = null;
     public lfgTeams: any[] = [];
     public checked: boolean[] = [];
-    public rosterdata = {};
+    public rosterdata = null;
     public rosterCache:any = {};
 
     public get showOfferButton() {
@@ -91,6 +92,7 @@ export default class App extends Vue {
 
         await this.activate();
         await this.getOpponents();
+        await this.reloadTeams();
 
         this.updateAllowed();
         this.refreshSelection();
@@ -98,6 +100,8 @@ export default class App extends Vue {
         setInterval(this.tick, 100);
         setInterval(this.getOpponents, 5000);
         setInterval(this.getOffers, 1000);
+
+        document.addEventListener('click', this.onOuterModalClick)
     }
 
     public async activate() {
@@ -111,7 +115,9 @@ export default class App extends Vue {
             isOwn: true,
             showDivisionHeader: false,
             showLeagueHeader: false,
-            allow: []
+            allow: [],
+            hasUnreadItems: false,
+            seen: [],
         }], this.$set);
 
         activeTeams.sort((a, b) => {
@@ -147,18 +153,13 @@ export default class App extends Vue {
         const now = Date.now();
 
         // Process match offers
-        let hover = false;
         for (let i = this.offers.length - 1; i>=0; i--) {
             if (this.offers[i].expiry < now) {
                 this.offers.splice(i, 1);
-            } else {
-                if (this.offers[i].hover) {
-                    hover = true;
-                }
             }
         }
 
-        if (hover === false) {
+        if (this.hoverBlock !== 'OFFERS') {
             while(this.pendingOffers.length > 0) {
                 const newOffer = this.pendingOffers.pop();
 
@@ -194,17 +195,15 @@ export default class App extends Vue {
         }
     }
 
+    public setHoverBlock(uiToBlock: 'OFFERS' | 'OPPONENTS' | null) {
+        this.hoverBlock = uiToBlock;
+    }
+
     private processOpponents() {
         // Process updated opponent list
         if (this.opponentsNeedUpdate) {
             this.opponentsNeedUpdate = false;
-            let hover = false;
-            this.opponentMap.forEach(opp => {
-                if (opp.hover) {
-                    hover = true;
-                }
-            });
-            if (hover === false) {
+            if (this.hoverBlock !== 'OPPONENTS') {
                 // Mark all current opponents as dirty
                 this.opponentMap.forEach((o, k) => {
                     this.opponentMap.get(k).dirty = true;
@@ -276,11 +275,11 @@ export default class App extends Vue {
                     }
                 });
 
-                // Store expanded state of coaches
-                let expanded: Array<string> = [];
+                // Store collapsed state of coaches
+                const collapsed: Array<string> = [];
                 for (let o of this.opponents) {
-                    if (o.expanded) {
-                        expanded.push(o.name);
+                    if (! o.expanded) {
+                        collapsed.push(o.name);
                     }
                 }
 
@@ -288,10 +287,8 @@ export default class App extends Vue {
                 let newOpponents = [];
                 this.opponentMap.forEach(o => {
                     newOpponents.push(o);
-                    // Expand if the coach was expanded before
-                    if (expanded.indexOf(o.name) > -1) {
-                        o.expanded = true;
-                    }
+                    // Expand unless the coach was explicitly collapsed (allow new coaches to be expanded by default)
+                    o.expanded = collapsed.indexOf(o.name) === -1;
                 });
 
                 this.opponents = newOpponents;
@@ -384,6 +381,35 @@ export default class App extends Vue {
                 }
             });
         }
+        this.updateUnread();
+    }
+
+    public updateUnread() {
+        for (const team of this.me.teams) {
+            if (this.selectedOwnTeam && team.id === this.selectedOwnTeam.id) {
+                team.hasUnreadItems = false;
+                continue;
+            }
+            if (team.allow.length === 0) {
+                team.hasUnreadItems = false;
+                continue;
+            }
+
+            if (! this.readHistory.has(team.id)) {
+                team.hasUnreadItems = true;
+                continue;
+            }
+
+            let newEntriesFound = false;
+            const teamReadHistory = this.readHistory.get(team.id);
+            for (const oppTeamId of team.allow) {
+                if (! teamReadHistory.includes(oppTeamId)) {
+                    newEntriesFound = true;
+                    break;
+                }
+            }
+            team.hasUnreadItems = newEntriesFound;
+        }
     }
 
     public applyTeamFilters() {
@@ -415,42 +441,163 @@ export default class App extends Vue {
         }
     }
 
+    public isExpanded(opponent) {
+        if (this.selectedOwnTeam) {
+            return opponent.expanded;
+        } else {
+            return this.expandedForAllOpponents.includes(opponent.id);
+        }
+    }
+
     public expandOpponent(opponent) {
-        this.expandedOpponent = (this.expandedOpponent == opponent) ? null : opponent;
+        if (this.selectedOwnTeam) {
+            // We have selected a team, so we can use the property directly on the opponent.
+            opponent.expanded = !opponent.expanded;
+        } else {
+            // No team selected, so we store the expanded state separately.
+            let index = this.expandedForAllOpponents.indexOf(opponent.id);
+            if (index !== -1) {
+                this.expandedForAllOpponents.splice(index, 1);
+            } else {
+                this.expandedForAllOpponents.push(opponent.id);
+            }
+        }
 
         this.refreshSelection();
     }
 
-    public select(team, selected) {
-        this.opponentMap.forEach(o => o.expanded = selected);
-
-        if (selected) {
-            if (team.isOwn) {
-                for (let myTeam of this.me.teams) {
-                    myTeam.selected = false;
-                }
-                this.selectedOwnTeam = team;
-            } else {
-                this.opponentMap.forEach(opponent => {
-                    for (let oppTeam of opponent.teams) {
-                        oppTeam.selected = false;
-                    }
-                });
-                this.selectedOpponentTeam = selected ? team : 0;
+    public expandAllOpponents() {
+        if (this.selectedOwnTeam) {
+            for (const visibleOpponent of this.visibleOpponents) {
+                visibleOpponent.expanded = true;
             }
+        } else {
+             this.expandedForAllOpponents = Array.from(this.opponentMap.values()).map((o) => o.id);
+        }
+    }
+
+    public collapseAllOpponents() {
+        if (this.selectedOwnTeam) {
+            for (const visibleOpponent of this.visibleOpponents) {
+                visibleOpponent.expanded = false;
+            }
+        } else {
+             this.expandedForAllOpponents = [];
+        }
+    }
+
+    public selectTeam(team) {
+        for (let myTeam of this.me.teams) {
+            myTeam.selected = false;
+        }
+
+        team.hasUnreadItems = false;
+
+        if (team.id === this.selectedOwnTeam.id) {
+            this.selectedOwnTeam = null;
+            team.selected = false;
 
         } else {
-            this.selectedOwnTeam = team.isOwn ? false : this.selectedOwnTeam;
-            this.selectedOpponentTeam = team.isOwn ? this.selectedOpponentTeam : false;
-            this.expandedOpponent = null;
+            this.selectedOwnTeam = team;
+            team.selected = true;
+
+            // update the read history for the selected team
+            if (! this.readHistory.has(this.selectedOwnTeam.id)) {
+                this.readHistory.set(this.selectedOwnTeam.id, []);
+            }
+            const teamReadHistory = this.readHistory.get(this.selectedOwnTeam.id);
+            for (const oppTeamId of team.allow) {
+                if (! teamReadHistory.includes(oppTeamId))
+                teamReadHistory.push(oppTeamId);
+            }
         }
-        team.selected = selected;
+
         this.refreshSelection();
+    }
+
+    private onOuterModalClick(e) {
+        const clickTarget = e.target;
+        const modals = [
+            document.querySelector('.rosterouter, .settingsouter, .teamsettingsouter'),
+        ];
+        for (const modal of modals) {
+            if (clickTarget == modal) {
+                this.modalDisplayed = null;
+            }
+        }
+    }
+
+    public async openModalRosterForTeamId(teamId) {
+        const rosterData = await this.getRoster(teamId);
+        this.rosterdata = rosterData;
+        this.modalDisplayed = 'ROSTER';
+    }
+
+    public async openModalRoster() {
+        this.openModalRosterForTeamId(this.selectedOwnTeam.id);
+    }
+
+    public closeModalRoster() {
+        this.rosterdata = null;
+        this.modalDisplayed = null;
+    }
+
+    public openModalSettings() {
+        this.modalDisplayed = 'SETTINGS';
+    }
+
+    public closeModalSettings() {
+        this.modalDisplayed = null;
+    }
+
+    public openModalTeamSettings() {
+        this.modalDisplayed = 'TEAM_SETTINGS';
+    }
+
+    public closeModalTeamSettings() {
+        this.modalDisplayed = null;
+    }
+
+    public abbreviate(stringValue: string, maxCharacters: number) {
+        if (stringValue.length <= maxCharacters) {
+            return stringValue;
+        }
+        return stringValue.substring(0, maxCharacters-1) + '…';
+    }
+
+    public teamLogo(team: any): number | false {
+        for (let l of team.raceLogos) {
+            if (l.size === 32) {
+                return l.logo;
+            }
+        }
+        return false;
+    }
+
+    public get availableBlackboxTeams(): number {
+        let available = 0;
+        for (const team of this.lfgTeams) {
+            if (team.division === 'Competitive') {
+                available++;
+            }
+        }
+
+        return available;
+    }
+
+    public get chosenBlackboxTeams(): number {
+        let chosen = 0;
+        for (const team of this.me.teams) {
+            if (team.division === 'Competitive') {
+                chosen++;
+            }
+        }
+
+        return chosen;
     }
 
     private refreshSelection() {
         let ownTeamSelected = false;
-        let opponentTeamSelected = false;
 
         // Update own team selection
         for (let myTeam of this.me.teams) {
@@ -465,33 +612,29 @@ export default class App extends Vue {
             this.selectedOwnTeam = false;
         }
 
-        // Update opponent selection
-        this.opponentMap.forEach(opp => {
-            opp.expanded = ownTeamSelected || (this.expandedOpponent != null && this.expandedOpponent.id == opp.id);
-            for (let oppTeam of opp.teams) {
-                oppTeam.selected = this.selectedOpponentTeam && (oppTeam.id == this.selectedOpponentTeam.id);
-                if (oppTeam.selected) {
-                    opp.expanded = true;
-                    opponentTeamSelected = true;
-                }
-            }
-        });
-        // No visible opponent team selected; update state to that effect
-        if (!opponentTeamSelected) {
-            this.selectedOpponentTeam = false;
-        }
-
         this.applyTeamFilters();
     }
 
+    private offerIsAlreadyPending(offerId: number): boolean {
+        for (const pendingOffer of this.pendingOffers) {
+            if (pendingOffer.id === offerId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private createOffer(offerData) {
+        if (this.offerIsAlreadyPending(offerData.id)) {
+            return;
+        }
+
         let offer = {
             id: offerData.id,
             expiry: offerData.expiry,
             timeRemaining: offerData.timeRemaining,
             lifetime: offerData.lifetime,
             external: offerData.external,
-            hover: false,
             home: {
                 id: offerData.team1.id,
                 team: offerData.team1.name,
@@ -509,24 +652,27 @@ export default class App extends Vue {
         this.pendingOffers.unshift(offer);
     }
 
-    private clearSelection() {
-        this.opponentMap.forEach(opp => {
-            opp.expanded = false;
-            for (let t of opp.teams) {
-                t.selected = false;
-            }
-        });
-
-        this.selectedOpponentTeam = false;
-        this.refreshSelection();
+    public sendOffer(team) {
+        let ownId = parseInt(this.selectedOwnTeam.id);
+        let oppId = parseInt(team.id);
+        Axios.post('/api/gamefinder/offer/' + ownId + '/' + oppId);
     }
 
-    public sendOffer() {
-        let ownId = parseInt(this.selectedOwnTeam.id);
-        let oppId = parseInt(this.selectedOpponentTeam.id);
-        Axios.post('/api/gamefinder/offer/' + ownId + '/' + oppId);
-        //this.createOffer(this.selectedOwnTeam, this.selectedOpponentTeam, false);
-        this.clearSelection();
+    private findOfferForTeam(team) {
+        for (const offer of this.offers) {
+            if (offer.home.id == this.selectedOwnTeam.id && offer.away.id === team.id) {
+                return offer;
+            }
+        }
+    }
+
+    public offerExists(team): boolean {
+        return this.findOfferForTeam(team) ? true : false;
+    }
+
+    public cancelOfferByTeam(team) {
+        const offer = this.findOfferForTeam(team)
+        this.cancelOffer(offer)
     }
 
     public cancelOffer(offer) {
@@ -540,6 +686,14 @@ export default class App extends Vue {
         this.display='none';
 
         await this.activate();
+
+        // always select if only 1 team
+        if (this.me.teams.length === 1) {
+            const onlyTeam = this.me.teams[0];
+            this.selectedOwnTeam = onlyTeam;
+            onlyTeam.selected = true;
+        }
+
         await this.getOpponents();
 
         await this.updateAllowed();
@@ -571,9 +725,14 @@ export default class App extends Vue {
         }
     }
 
-    public showRanking(opponent): boolean {
-        const result = opponent.visibleTeams > 0;
-        return result;
+    public get visibleOpponents(): any[] {
+        const visibleOpponents = [];
+        for (const opponent of this.opponents) {
+            if (opponent.visibleTeams > 0) {
+                visibleOpponents.push(opponent);
+            }
+        }
+        return visibleOpponents;
     }
 
     private updateAllChecked()
@@ -672,29 +831,10 @@ export default class App extends Vue {
 
         return data.roster;
     }
-
-    public async hover(event, team) {
-        const hover = document.getElementById('roster');
-        hover.style.display = 'block';
-
-        const teamId = team.id;
-        const data = await this.getRoster(teamId);
-        this.rosterdata = data;
-        const wrapper: any = document.getElementById('wrapper');
-        const rect = wrapper.getBoundingClientRect();
-        hover.style.left = rect.left + "px";
-    }
-
-    public leave(event, team) {
-        const hover = document.getElementById('roster');
-        hover.style.display = 'none';
-        this.rosterdata = {};
-    }
 }
 
 const app = new App({
     el: '#vuecontent',
     components: {
-        'team': TeamComponent
     }
 });
