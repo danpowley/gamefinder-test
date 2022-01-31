@@ -26,9 +26,7 @@
         <div class="basicbox">
             <div class="header">Match Offers<div v-show="additionalOffers > 0" class="additionaloffers">Additional offers: {{ additionalOffers }}</div></div>
             <div class="content" id="offerlistwrapper">
-                <template v-if="offers.length === 0">
-                    <div class="nooffers">Sorry, no current offers.</div>
-                </template>
+                <div v-show="offers.length === 0" class="nooffers">Sorry, no current offers.</div>
                 <div id="offerlist" @mouseenter="setHoverBlock('OFFERS')" @mouseleave="setHoverBlock(null)">
                     <div v-for="offer in offers" :key="offer.id" class="matchoffer">
                         <div class="icon external" v-show="offer.external">?</div>
@@ -109,7 +107,7 @@
             </div>
         </div>
 
-        <div id="selectedownteam" v-if="display == 'lfg'">
+        <div id="selectedownteam" v-show="display == 'lfg'">
             <template v-if="selectedOwnTeam">
                 <div class="logo">
                     <img :src="'https://fumbbl.com/i/' + selectedOwnTeam.raceLogos[0].logo" />
@@ -133,64 +131,58 @@
             </template>
         </div>
 
-        <div id="opponentslist" v-if="display == 'lfg'" @mouseenter="setHoverBlock('OPPONENTS')" @mouseleave="setHoverBlock(null)">
+        <div id="opponentslist" v-show="display == 'lfg'" @mouseenter="setHoverBlock('OPPONENTS')" @mouseleave="setHoverBlock(null)">
             <div class="expandcollapseall" v-show="visibleOpponents.length > 0"><a href="#" @click.prevent="expandAllOpponents()">Expand</a> <a href="#" @click.prevent="collapseAllOpponents()">Collapse</a></div>
             <div>
                 <strong>{{ selectedOwnTeam ? 'Opponents filtered by selected team.' : 'All opponents on Gamefinder' }}</strong>
             </div>
-            <template v-if="visibleOpponents.length > 0">
-                <div v-for="opponent in visibleOpponents" :key="opponent.id" class="opponent">
-                    <div class="coach">
-                        <a class="disclosure" @click.prevent="expandOpponent(opponent)" href="#">
-                            <span class="showhideicon" v-if="isExpanded(opponent)">&#x25bc;</span>
-                            <span class="showhideicon" v-else>&#x25b6;</span>
-                            <span class="teamcount" title="Teams listed for this opponent">{{ opponent.teams.filter((o) => !o.fade).length }}</span>
-                            {{ opponent.name }}
-                        </a>
-                        <span class="ranking">
-                            {{ opponent.ranking }}
-                        </span>
-                    </div>
-                    <div v-show="isExpanded(opponent)">
-                        <div v-for="oppTeam in opponent.teams" :key="oppTeam.id" class="team" :class="[{fade: oppTeam.fade}]">
-                            <div class="logo">
-                                <img :src="'https://fumbbl.com/i/' + teamLogo(oppTeam)" />
+            <div v-show="visibleOpponents.length === 0">No opponents available.</div>
+            <div v-for="opponent in visibleOpponents" :key="opponent.id" class="opponent">
+                <div class="coach">
+                    <a class="disclosure" @click.prevent="expandOpponent(opponent)" href="#">
+                        <span class="showhideicon" v-if="isExpanded(opponent)">&#x25bc;</span>
+                        <span class="showhideicon" v-else>&#x25b6;</span>
+                        <span class="teamcount" title="Teams listed for this opponent">{{ opponent.teams.filter((o) => !o.fade).length }}</span>
+                        {{ opponent.name }}
+                    </a>
+                    <span class="ranking">
+                        {{ opponent.ranking }}
+                    </span>
+                </div>
+                <div v-show="isExpanded(opponent)">
+                    <div v-for="oppTeam in opponent.teams" :key="oppTeam.id" class="team" :class="[{fade: oppTeam.fade}]">
+                        <div class="logo">
+                            <img :src="'https://fumbbl.com/i/' + teamLogo(oppTeam)" />
+                        </div>
+                        <div class="details">
+                            <div class="name">{{ abbreviate(oppTeam.name, 55) }}</div>
+                            <div class="info">
+                                <span v-show="offerExists(oppTeam)" class="offeredtag">Offered</span>
+                                <span title="Seasons and games played">S{{ oppTeam.currentSeason }}:G{{ oppTeam.gamesPlayedInSeason }}</span> TV {{ oppTeam.teamValue / 1000 }}k {{ oppTeam.race }}
                             </div>
-                            <div class="details">
-                                <div class="name">{{ abbreviate(oppTeam.name, 55) }}</div>
-                                <div class="info">
-                                    <template v-if="offerExists(oppTeam)">
-                                        <span class="offeredtag">Offered</span>
-                                    </template>
-                                    <span title="Seasons and games played">S{{ oppTeam.currentSeason }}:G{{ oppTeam.gamesPlayedInSeason }}</span> TV {{ oppTeam.teamValue / 1000 }}k {{ oppTeam.race }}
-                                </div>
-                            </div>
-                            <div class="links">
-                                <template v-if="selectedOwnTeam">
-                                    <template v-if="offerExists(oppTeam)">
-                                        <span>Offered</span>
-                                    </template>
-                                    <template v-else>
-                                        <a href="#" @click.prevent="sendOffer(oppTeam)">Offer</a>
-                                    </template>
-                                    <a href="#">Hide</a>
+                        </div>
+                        <div class="links">
+                            <template v-if="selectedOwnTeam">
+                                <template v-if="offerExists(oppTeam)">
+                                    <span>Offered</span>
                                 </template>
-                                <a href="#" @click.prevent="openModalRosterForTeamId(oppTeam.id)">Roster</a>
-                            </div>
+                                <template v-else>
+                                    <a href="#" @click.prevent="sendOffer(oppTeam)">Offer</a>
+                                </template>
+                                <a href="#">Hide</a>
+                            </template>
+                            <a href="#" @click.prevent="openModalRosterForTeamId(oppTeam.id)">Roster</a>
                         </div>
                     </div>
                 </div>
-            </template>
-            <template v-else>
-                No opponents available.
-            </template>
+            </div>
         </div>
     </div>
 
     <div class="rosterouter" v-if="modalDisplayed == 'ROSTER'">
         <div class="rosterinner">
             <a href="#" class="closemodal" @click.prevent="closeModalRoster">&times;</a>
-            <div class="rosterinfo">{{ abbreviate(rosterdata.name, 60) }}, TV {{ rosterdata.teamValue/1000 }}k <span v-if="rosterdata.roster">{{ rosterdata.roster.name }}</span></div>
+            <div class="rosterinfo">{{ abbreviate(rosterdata.name, 60) }}, TV {{ rosterdata.teamValue/1000 }}k</div>
             <div class="teaminfo">{{ rosterdata.rerolls }} RR, {{rosterdata.fanFactor}} FF, {{ rosterdata.treasury/1000 }}k gold</div>
             <table cellspacing="0" cellpadding="0" width="100%">
             <tr v-for="player in rosterdata.players">
