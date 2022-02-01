@@ -50,9 +50,7 @@ export default class App extends Vue {
             teams: [{
                 visible: false,
                 selected: false,
-                isOwn: false,
-                showDivisionHeader: false,
-                showLeagueHeader: false
+                isOwn: false
             }]
         }], this.$set);
 
@@ -112,8 +110,6 @@ export default class App extends Vue {
         Util.applyDeepDefaults(activeTeams, [{
             selected: false,
             isOwn: true,
-            showDivisionHeader: false,
-            showLeagueHeader: false,
             allow: [],
             hasUnreadItems: false,
             seen: [],
@@ -427,21 +423,6 @@ export default class App extends Vue {
             }
             opponent.visibleTeams = numVisibleTeams;
         });
-        var previousDivision = false;
-        var previousLeagueId = false;
-        for (let myTeam of this.me.teams) {
-            myTeam.showDivisionHeader = false;
-            myTeam.showLeagueHeader = false;
-            if (previousDivision !== myTeam.division) {
-                previousDivision = myTeam.division;
-                myTeam.showDivisionHeader = true;
-            }
-
-            if (myTeam.division === 'League' && previousLeagueId !== myTeam.league.id) {
-                previousLeagueId = myTeam.league.id;
-                myTeam.showLeagueHeader = true;
-            }
-        }
     }
 
     public isExpanded(opponent) {
