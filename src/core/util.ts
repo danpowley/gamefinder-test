@@ -40,4 +40,11 @@ export class Util {
       const millisecondsPerDay = 24 * 60 * 60 * 1000;
       return (this.treatAsUTC(endDate) - this.treatAsUTC(startDate)) / millisecondsPerDay;
   }
+
+  public static abbreviate(stringValue: string, maxCharacters: number) {
+    if (stringValue.length <= maxCharacters) {
+        return stringValue;
+    }
+    return stringValue.substring(0, maxCharacters-1) + '…';
+}
 }

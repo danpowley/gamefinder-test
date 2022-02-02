@@ -23,6 +23,7 @@
     "express": "^4.17.2",
     "random-words": "^1.1.1",
     "vue": "^2.6.14",
-    "vue-class-component": "^7.2.6"
+    "vue-class-component": "^7.2.6",
+    "vue-property-decorator": "^9.1.2"
   }
 }

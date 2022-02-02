@@ -3,18 +3,17 @@ import Component from "vue-class-component"
 import { Util } from "../core/util"
 import Axios from "axios"
 import GameFinderPolicies from "./GameFinderPolicies";
+import LfgTeamsComponent from "./components/LfgTeams";
+import BlackboxComponent from "./components/Blackbox";
 
 @Component
 export default class App extends Vue {
-    private gameFinderPolicies: GameFinderPolicies;
-
-    coachName:string|null = null;
+    private coachName:string|null = null;
 
     public hoverBlock: 'OFFERS' | 'OPPONENTS' | null = null;
     public featureFlags = {blackbox: true};
 
     public selectedOwnTeam:any = false;
-    public selectedOpponentTeam:any = false;
     public me:any = { teams: [] };
 
     private opponentsNeedUpdate: boolean;
@@ -31,14 +30,8 @@ export default class App extends Vue {
 
     public display: string = 'lfg';
     public modalDisplayed: 'ROSTER' | 'SETTINGS' | 'TEAM_SETTINGS' | null = null;
-    public lfgTeams: any[] = [];
-    public checked: boolean[] = [];
     public rosterdata = null;
     public rosterCache:any = {};
-
-    public get showOfferButton() {
-        return this.selectedOwnTeam && this.selectedOpponentTeam;
-    }
 
     private async getOpponents() {
         const result = await Axios.post('/api/gamefinder/teams')
@@ -89,13 +82,12 @@ export default class App extends Vue {
     }
 
     async mounted() {
-        this.gameFinderPolicies = new GameFinderPolicies();
-
         this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
+
+        this.cheatCreateCoach();
 
         await this.activate();
         await this.getOpponents();
-        await this.reloadTeams();
 
         this.updateAllowed();
         this.refreshSelection();
@@ -105,6 +97,13 @@ export default class App extends Vue {
         setInterval(this.getOffers, 1000);
 
         document.addEventListener('click', this.onOuterModalClick)
+    }
+
+    /**
+     * Creates coach and teams (if already exist nothing happens)
+     */
+    private async cheatCreateCoach() {
+        await Axios.post('/api/gamefinder/addcheatingcoach', {cheatingCoachName: this.coachName});
     }
 
     public async activate() {
@@ -120,7 +119,7 @@ export default class App extends Vue {
             seen: [],
         }], this.$set);
 
-        activeTeams.sort(this.gameFinderPolicies.sortTeamByDivisionNameLeagueNameTeamName);
+        activeTeams.sort(GameFinderPolicies.sortTeamByDivisionNameLeagueNameTeamName);
         this.me.teams = activeTeams;
     }
 
@@ -297,7 +296,7 @@ export default class App extends Vue {
             team.allow = [];
             this.opponentMap.forEach(opponent => {
                 for (let oppTeam of opponent.teams) {
-                    if (this.gameFinderPolicies.isMatchAllowed(team, oppTeam)) {
+                    if (GameFinderPolicies.isMatchAllowed(team, oppTeam)) {
                         team.allow.push(oppTeam.id);
                     }
                 }
@@ -470,10 +469,7 @@ export default class App extends Vue {
     }
 
     public abbreviate(stringValue: string, maxCharacters: number) {
-        if (stringValue.length <= maxCharacters) {
-            return stringValue;
-        }
-        return stringValue.substring(0, maxCharacters-1) + '…';
+        return Util.abbreviate(stringValue, maxCharacters);
     }
 
     public teamLogo(team: any): number | false {
@@ -483,28 +479,6 @@ export default class App extends Vue {
             }
         }
         return false;
-    }
-
-    public get availableBlackboxTeams(): number {
-        let available = 0;
-        for (const team of this.lfgTeams) {
-            if (team.division === 'Competitive') {
-                available++;
-            }
-        }
-
-        return available;
-    }
-
-    public get chosenBlackboxTeams(): number {
-        let chosen = 0;
-        for (const team of this.me.teams) {
-            if (team.division === 'Competitive') {
-                chosen++;
-            }
-        }
-
-        return chosen;
     }
 
     private refreshSelection() {
@@ -614,27 +588,7 @@ export default class App extends Vue {
     }
 
     public async showTeams() {
-        this.display='none';
-        await this.reloadTeams();
-        this.updateAllChecked();
         this.display='teams';
-    }
-
-    public async reloadTeams() {
-        const result = await Axios.post('/api/coach/teams/' + this.coachName);
-        let teams = result.data.teams;
-
-        this.lfgTeams = [];
-        this.checked = [];
-        for (let team of teams) {
-            if (team.canLfg == 'Yes' && team.status == 'Active') {
-                this.lfgTeams.push(team);
-                if (team.isLfg == 'Yes') {
-                    this.checked.push(team.id);
-                }
-            }
-        }
-        this.lfgTeams.sort(this.gameFinderPolicies.sortTeamByDivisionNameLeagueNameTeamName);
     }
 
     public get visibleOpponents(): any[] {
@@ -645,69 +599,6 @@ export default class App extends Vue {
             }
         }
         return visibleOpponents;
-    }
-
-    private updateAllChecked()
-    {
-        const allCheckbox:any = document.getElementById('all');
-        const checkboxes = document.getElementsByClassName('teamcheck');
-
-        let allChecked = true;
-        let allUnchecked = true;
-        for (let index=0; index<checkboxes.length; index++) {
-            const c:any = checkboxes[index];
-            if (c.checked) {
-                allUnchecked = false;
-            } else {
-                allChecked = false;
-            }
-        }
-
-        if (allUnchecked) {
-            allCheckbox.checked = false;
-            allCheckbox.indeterminate = false;
-        } else if (allChecked) {
-            allCheckbox.checked = true;
-            allCheckbox.indeterminate = false;
-        } else {
-            allCheckbox.checked = false;
-            allCheckbox.indeterminate = true;
-        }
-    }
-
-    public toggleTeam(event) {
-        const target = event.target;
-        const checked = target.checked;
-        const id = target.value;
-
-        if (checked) {
-            Axios.post('/api/gamefinder/addteam/' + id);
-        } else {
-            Axios.post('/api/gamefinder/removeteam/' + id);
-        }
-        this.updateAllChecked();
-    }
-
-    public toggleAll(event) {
-        const checked = event.target.checked;
-
-        if (checked) {
-            Axios.post('/api/gamefinder/addallteams', {cheatingCoachName: this.coachName});
-        } else {
-            Axios.post('/api/gamefinder/removeallteams', {cheatingCoachName: this.coachName});
-        }
-
-        const checkboxes = document.getElementsByClassName('teamcheck');
-
-        const arr = [];
-        for (let index=0; index<checkboxes.length; index++) {
-            const c:any = checkboxes[index];
-            c.checked = checked;
-            if (checked) {
-                arr.push(c.value);
-            }
-        }
-        this.checked = arr;
     }
 
     public async getRoster(teamId) {
@@ -748,5 +639,7 @@ export default class App extends Vue {
 const app = new App({
     el: '#vuecontent',
     components: {
+        'lfgteams': LfgTeamsComponent,
+        'blackbox': BlackboxComponent
     }
 });

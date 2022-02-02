@@ -75,10 +75,14 @@ app.post('/api/gamefinder/canceloffer/:offerId', (req, res) => {
   res.send(true)
 })
 
-// not much for us to do here, presumably this marks the coach themselves as LFG
-app.post('/api/gamefinder/activate', (req, res) => {
+app.post('/api/gamefinder/addcheatingcoach', (req, res) => {
   const coachName = req.body.cheatingCoachName
   db.addCoach(coachName)
+  res.send(true)
+})
+
+// not much for us to do here, presumably this marks the coach themselves as LFG
+app.post('/api/gamefinder/activate', (req, res) => {
   res.send(true)
 })
 

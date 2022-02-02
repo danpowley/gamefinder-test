@@ -1,9 +1,6 @@
 export default class GameFinderPolicies {
-    constructor() {
 
-    }
-
-    public isMatchAllowed(team1, team2): boolean {
+    public static isMatchAllowed(team1, team2): boolean {
         if (!team1 || !team2) {
             return false;
         }
@@ -53,7 +50,7 @@ export default class GameFinderPolicies {
         return true;
     }
 
-    private getTvLimit(team) {
+    private static getTvLimit(team) {
         let rating = Math.floor(team.teamValue / 10000);
         if (team.gamesPlayed < 3) {
             return Math.round(rating * 0.1) * 10000;
@@ -69,7 +66,7 @@ export default class GameFinderPolicies {
         return 0;        
     }
 
-    public sortTeamByDivisionNameLeagueNameTeamName(teamA, teamB) {
+    public static sortTeamByDivisionNameLeagueNameTeamName(teamA, teamB) {
         let d = teamA.division > teamB.division ? -1 : (teamA.division === teamB.division ? 0 : 1);
 
         if (d === 0 && teamA.division === 'League' && teamA.league.name) {

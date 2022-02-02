@@ -3,25 +3,7 @@
 <div class="gamefinder" id="vuecontent" coach="<%= coachName %>">
 
     <div class="leftcolumn">
-        <div v-if="featureFlags.blackbox" class="basicbox">
-            <div class="header">Blackbox</div>
-            <div class="content" id="blackboxwrapper">
-                <div class="nextdraw">Next draw in <strong>~3 minutes</strong>.</div>
-                <template v-if="availableBlackboxTeams === 0">
-                    <div>To play in Blackbox you first need to create a team in the Competitive division.</div>
-                </template>
-                <template v-else>
-                    <template v-if="chosenBlackboxTeams > 0">
-                        <div class="teamsready">You have <strong>{{ chosenBlackboxTeams }} teams</strong> ready to join the draw ({{ availableBlackboxTeams }} eligible teams in total).</div>
-                        <button>Join the draw</button>
-                    </template>
-                    <template v-else>
-                        <div class="infonote">How to join? The first step is to select your teams using the &quot;Choose teams&quot; link on the right. Once your teams are selected you'll see a button here to join the next draw.</div>
-                        <div class="infonote">Please note: only Competitive division teams can join Blackbox, you have {{ availableBlackboxTeams }} eligible teams in total.</div>
-                    </template>
-                </template>
-            </div>
-        </div>
+        <blackbox v-if="featureFlags.blackbox" :display-is-active="display == 'lfg'"></blackbox>
 
         <div class="basicbox">
             <div class="header">Match Offers<div v-show="additionalOffers > 0" class="additionaloffers">Additional offers: {{ additionalOffers }}</div></div>
@@ -84,28 +66,7 @@
 
         </div>
 
-        <div class="basicbox" v-show="display == 'teams'">
-            <div class="header">Select Teams</div>
-            <div class="content" id="teamswrapper">
-                <div class="lfgList">
-                    <div v-for="lfgTeam in lfgTeams" :key="lfgTeam.id" class="lfgteam">
-                        <input class="teamcheck" type="checkbox" :value="lfgTeam.id" v-model="checked" @change="toggleTeam">
-                        <img :src="'https://fumbbl.com/i/' + lfgTeam.raceLogos[0].logo" />
-                        <div>
-                            <div class="teamname">{{ abbreviate(lfgTeam.name, 70) }}</div>
-                            <div class="teaminfo"><span title="Seasons and games played">S{{ lfgTeam.currentSeason }}:G{{ lfgTeam.gamesPlayedInSeason }}</span> TV{{ lfgTeam.teamValue/1000 }}k {{ lfgTeam.race }}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="controls">
-                    <div id="selectall">
-                        <input type="checkbox" id="all" @change="toggleAll"/>
-                        <label for="all">Select All</label>
-                    </div>
-                    <input type="button" id="showlfg" value="Done" @click="showLfg" />
-                </div>
-            </div>
-        </div>
+        <lfgteams v-if="display == 'teams'" @show-lfg="showLfg"></lfgteams>
 
         <div id="selectedownteam" v-show="display == 'lfg'">
             <template v-if="selectedOwnTeam">
