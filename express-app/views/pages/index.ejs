@@ -140,51 +140,11 @@
         </div>
     </div>
 
-    <div class="rosterouter" v-if="modalDisplayed == 'ROSTER'">
-        <div class="rosterinner">
-            <a href="#" class="closemodal" @click.prevent="closeModalRoster">&times;</a>
-            <div class="rosterinfo">{{ abbreviate(rosterdata.name, 60) }}, TV {{ rosterdata.teamValue/1000 }}k</div>
-            <div class="teaminfo">{{ rosterdata.rerolls }} RR, {{rosterdata.fanFactor}} FF, {{ rosterdata.treasury/1000 }}k gold</div>
-            <table cellspacing="0" cellpadding="0" width="100%">
-            <tr v-for="player in rosterdata.players">
-                <td class="position">{{ player.position }}</td><td class="injuries">{{ player.injuries }}</td><td>{{ player.skills }}</td>
-            </tr>
-            </table>
-        </div>
-    </div>
+    <roster :modal-settings="modalSettings"></roster>
 
-    <div class="settingsouter" v-if="modalDisplayed == 'SETTINGS'">
-        <div class="settingsinner">
-            <a href="#" class="closemodal" @click.prevent="closeModalSettings">&times;</a>
-            <div class="settingstitle">Gamefinder settings for ALL teams</div>
-            <div class="settingssection">
-                <div class="title"><strong>Hidden teams:</strong></div>
-                <div>No teams currently hidden.</div>
-            </div>
-            <div class="settingssection">
-                <div class="title"><strong>Hidden coaches:</strong></div>
-                <div>No coaches currently hidden.</div>
-            </div>
-        </div>
-    </div>
+    <settings :modal-settings="modalSettings"></settings>
 
-    <div class="teamsettingsouter" v-if="modalDisplayed == 'TEAM_SETTINGS'">
-        <div class="teamsettingsinner">
-            <a href="#" class="closemodal" @click.prevent="closeModalTeamSettings">&times;</a>
-            <div class="settingstitle">Settings for: {{ abbreviate(selectedOwnTeam.name, 50) }}</div>
-            <div class="settingssection">
-                <div class="title"><strong>Allowed CTV Range:</strong></div>
-                <div>Leave blank to use Gamefinder defaults.</div>
-                <div>
-                    <label><input type="text" size=4> Under</label>
-                </div>
-                <div>
-                    <label><input type="text" size=4> Over</label>
-                </div>
-            </div>
-            <button>Save changes</button> (maybe we don't want a Save button, just take any valid value as soon as its changed)
-        </div>
-    </div>
+    <teamsettings :modal-settings="modalSettings"></teamsettings>
 </div>
 
 <%- include('../partials/footer'); %>

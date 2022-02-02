@@ -5,6 +5,9 @@ import Axios from "axios"
 import GameFinderPolicies from "./GameFinderPolicies";
 import LfgTeamsComponent from "./components/LfgTeams";
 import BlackboxComponent from "./components/Blackbox";
+import SettingsComponent from "./components/Settings";
+import TeamSettingsComponent from "./components/TeamSettings";
+import RosterComponent from "./components/Roster";
 
 @Component
 export default class App extends Vue {
@@ -29,9 +32,8 @@ export default class App extends Vue {
     public additionalOffers: number = 0;
 
     public display: string = 'lfg';
-    public modalDisplayed: 'ROSTER' | 'SETTINGS' | 'TEAM_SETTINGS' | null = null;
-    public rosterdata = null;
-    public rosterCache:any = {};
+
+    public modalSettings: {roster: {teamId: number | null}, settings: boolean, teamSettings: {team: any}} = {roster: {teamId: null}, settings: false, teamSettings: {team: null}};
 
     private async getOpponents() {
         const result = await Axios.post('/api/gamefinder/teams')
@@ -432,40 +434,31 @@ export default class App extends Vue {
         ];
         for (const modal of modals) {
             if (clickTarget == modal) {
-                this.modalDisplayed = null;
+                this.closeModal();
             }
         }
     }
 
     public async openModalRosterForTeamId(teamId) {
-        const rosterData = await this.getRoster(teamId);
-        this.rosterdata = rosterData;
-        this.modalDisplayed = 'ROSTER';
+        this.modalSettings.roster.teamId = teamId;
     }
 
     public async openModalRoster() {
         this.openModalRosterForTeamId(this.selectedOwnTeam.id);
     }
 
-    public closeModalRoster() {
-        this.rosterdata = null;
-        this.modalDisplayed = null;
-    }
-
     public openModalSettings() {
-        this.modalDisplayed = 'SETTINGS';
-    }
-
-    public closeModalSettings() {
-        this.modalDisplayed = null;
+        this.modalSettings.settings = true;
     }
 
     public openModalTeamSettings() {
-        this.modalDisplayed = 'TEAM_SETTINGS';
+        this.modalSettings.teamSettings.team = this.selectedOwnTeam;
     }
 
-    public closeModalTeamSettings() {
-        this.modalDisplayed = null;
+    public closeModal() {
+        this.modalSettings.roster.teamId = null;
+        this.modalSettings.settings = false;
+        this.modalSettings.teamSettings.team = null;
     }
 
     public abbreviate(stringValue: string, maxCharacters: number) {
@@ -600,46 +593,15 @@ export default class App extends Vue {
         }
         return visibleOpponents;
     }
-
-    public async getRoster(teamId) {
-        let data = this.rosterCache[teamId];
-
-        if (this.rosterCache[teamId] != undefined) {
-            if (data.expiry < Date.now()) {
-                data = undefined;
-            }
-        }
-        if (data == undefined) {
-            const result = await Axios.post('/api/team/get/'+teamId);
-
-            for (const p of result.data.players) {
-                p.skills.sort((a,b) => a.localeCompare(b));
-                p.skills = p.skills.join(', ');
-            }
-
-            result.data.players.sort((a,b) => {
-                let r = a.position.localeCompare(b.position);
-                if (r == 0) {
-                    r = b.skills.length - a.skills.length;
-                }
-                return r;
-            });
-
-            data = {
-                expiry: Date.now() + 60000,
-                roster: result.data,
-            }
-            this.rosterCache[teamId] = data;
-        }
-
-        return data.roster;
-    }
 }
 
 const app = new App({
     el: '#vuecontent',
     components: {
         'lfgteams': LfgTeamsComponent,
-        'blackbox': BlackboxComponent
+        'blackbox': BlackboxComponent,
+        'settings': SettingsComponent,
+        'teamsettings': TeamSettingsComponent,
+        'roster': RosterComponent
     }
 });

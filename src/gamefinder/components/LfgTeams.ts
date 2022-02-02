@@ -34,8 +34,8 @@ import GameFinderPolicies from '../GameFinderPolicies';
 })
 export default class LfgTeamsComponent extends Vue {
     private coachName: string | null = null;
-    public teams: any[] = [];
-    public checked: boolean[] = [];
+    private teams: any[] = [];
+    private checked: boolean[] = [];
 
     async mounted() {
         this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
@@ -43,11 +43,11 @@ export default class LfgTeamsComponent extends Vue {
         this.updateAllChecked();
     }
 
-    public abbreviate(stringValue: string, maxCharacters: number) {
+    private abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
     }
 
-    public showLfg() {
+    private showLfg() {
         this.$emit('show-lfg');
     }
 
@@ -64,7 +64,7 @@ export default class LfgTeamsComponent extends Vue {
         this.updateAllChecked();
     }
 
-    public toggleAll(event) {
+    private toggleAll(event) {
         const checked = event.target.checked;
 
         if (checked) {
@@ -88,7 +88,7 @@ export default class LfgTeamsComponent extends Vue {
         this.updateAllChecked();
     }
 
-    public toggleTeam(event) {
+    private toggleTeam(event) {
         const target = event.target;
         const checked = target.checked;
         const id = target.value;

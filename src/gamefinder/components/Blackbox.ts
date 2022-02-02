@@ -1,6 +1,5 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Watch } from 'vue-property-decorator';
 import Axios from 'axios';
 
 @Component({
@@ -35,26 +34,30 @@ import Axios from 'axios';
             type: Boolean,
             required: true
         }
+    },
+    watch: {
+        displayIsActive: function () {
+            this.onDisplayIsActiveChanged();
+        }
     }
 })
 export default class LfgTeamsComponent extends Vue {
     private coachName: string | null = null;
-    public availableBlackboxTeams: number = 0;
-    public chosenBlackboxTeams: number = 0;
+    private availableBlackboxTeams: number = 0;
+    private chosenBlackboxTeams: number = 0;
 
     async mounted() {
         this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
         this.refresh();
     }
 
-    @Watch('displayIsActive')
-    onDisplayIsActiveChanged(newValue: boolean, oldValue: boolean) {
-        if (newValue) {
+    private onDisplayIsActiveChanged() {
+        if (this.$props.displayIsActive) {
             this.refresh();
         }
     }
 
-    public async refresh() {
+    private async refresh() {
         this.cheatCreateCoach();
         const result = await Axios.post('/api/coach/teams/' + this.coachName);
 
