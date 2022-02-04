@@ -210,11 +210,13 @@ export default class App extends Vue {
     }
 
     public selectTeam(team) {
-        this.selectedOwnTeam = team;
-
-        this.updateReadHistoryForSelectedOwnTeam();
-
-        this.refresh();
+        if (this.selectedOwnTeam && this.selectedOwnTeam.id === team.id) {
+            this.deselectTeam();
+        } else {
+            this.selectedOwnTeam = team;
+            this.updateReadHistoryForSelectedOwnTeam();
+            this.refresh();
+        }
     }
 
     public deselectTeam() {
