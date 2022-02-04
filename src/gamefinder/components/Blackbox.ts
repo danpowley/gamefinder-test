@@ -41,7 +41,7 @@ import Axios from 'axios';
         }
     }
 })
-export default class LfgTeamsComponent extends Vue {
+export default class BlackboxComponent extends Vue {
     private coachName: string | null = null;
     private availableBlackboxTeams: number = 0;
     private chosenBlackboxTeams: number = 0;
