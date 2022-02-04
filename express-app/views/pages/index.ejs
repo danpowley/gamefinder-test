@@ -9,7 +9,6 @@
     </div>
 
     <div class="rightcolumn">
-
         <div id="overallstatus">
             <%= coachName %>: You have {{ me.teams.length }} team{{ me.teams.length === 1 ? '' : 's' }} looking for a game.
             <div class="overalllinks"><a href="#" @click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModalSettings">Settings</a></div>
@@ -19,54 +18,24 @@
 
         <lfgteams v-if="display === 'TEAMS'" @show-lfg="showLfg"></lfgteams>
 
-        <selectedownteam v-show="display === 'LFG'" :team="selectedOwnTeam" @deselect-team="deselectTeam" @open-modal-roster="openModalRoster" @open-modal-team-settings="openModalTeamSettings"></selectedownteam>
+        <selectedownteam
+            v-show="display === 'LFG'"
+            :team="selectedOwnTeam"
+            @deselect-team="deselectTeam"
+            @open-modal-roster="openModalRoster"
+            @open-modal-team-settings="openModalTeamSettings"></selectedownteam>
 
-        <div id="opponentslist" v-show="display == 'LFG'" @mouseenter="setHoverBlock('OPPONENTS', true)" @mouseleave="setHoverBlock('OPPONENTS', false)">
-            <div class="expandcollapseall" v-show="visibleOpponents.length > 0"><a href="#" @click.prevent="expandAllOpponents()">Expand</a> <a href="#" @click.prevent="collapseAllOpponents()">Collapse</a></div>
-            <div>
-                <strong>{{ selectedOwnTeam ? 'Opponents filtered by selected team.' : 'All opponents on Gamefinder' }}</strong>
-            </div>
-            <div v-show="visibleOpponents.length === 0">No opponents available.</div>
-            <div v-for="opponent in visibleOpponents" :key="opponent.id" class="opponent">
-                <div class="coach">
-                    <a class="disclosure" @click.prevent="expandOpponent(opponent)" href="#">
-                        <span class="showhideicon" v-if="isExpanded(opponent)">&#x25bc;</span>
-                        <span class="showhideicon" v-else>&#x25b6;</span>
-                        <span class="teamcount" title="Teams listed for this opponent">{{ opponent.teams.filter((o) => o.visible).length }}</span>
-                        {{ opponent.name }}
-                    </a>
-                    <span class="ranking">
-                        {{ opponent.ranking }}
-                    </span>
-                </div>
-                <div v-show="isExpanded(opponent)">
-                    <div v-for="oppTeam in opponent.teams" v-if="oppTeam.visible" :key="oppTeam.id" class="team">
-                        <div class="logo">
-                            <img :src="'https://fumbbl.com/i/' + teamLogo(oppTeam)" />
-                        </div>
-                        <div class="details">
-                            <div class="name">{{ abbreviate(oppTeam.name, 55) }}</div>
-                            <div class="info">
-                                <span v-show="offerExists(oppTeam)" class="offeredtag">Offered</span>
-                                <span title="Seasons and games played">S{{ oppTeam.currentSeason }}:G{{ oppTeam.gamesPlayedInSeason }}</span> TV {{ oppTeam.teamValue / 1000 }}k {{ oppTeam.race }}
-                            </div>
-                        </div>
-                        <div class="links">
-                            <template v-if="selectedOwnTeam">
-                                <template v-if="offerExists(oppTeam)">
-                                    <span>Offered</span>
-                                </template>
-                                <template v-else>
-                                    <a href="#" @click.prevent="sendOffer(oppTeam)">Offer</a>
-                                </template>
-                                <a href="#">Hide</a>
-                            </template>
-                            <a href="#" @click.prevent="openModalRosterForTeamId(oppTeam.id)">Roster</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <opponents
+            v-show="display == 'LFG'"
+            :opponent-map="opponentMap"
+            :opponents-refresh-required="opponentsRefreshRequired"
+            :selected-own-team="selectedOwnTeam"
+            :opponent-team-ids-with-offers-from-selected-own-team="opponentTeamIdsWithOffersFromSelectedOwnTeam"
+            :hover-block="hoverBlock"
+            @refresh="refresh"
+            @opponents-refreshed="setOpponentsRefreshed"
+            @set-hover-block="setHoverBlock"
+            @open-modal-roster="openModalRosterForTeamId"></opponents>
     </div>
 
     <roster :modal-settings="modalSettings"></roster>
