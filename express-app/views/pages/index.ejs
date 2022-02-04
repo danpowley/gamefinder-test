@@ -3,38 +3,9 @@
 <div class="gamefinder" id="vuecontent" coach="<%= coachName %>">
 
     <div class="leftcolumn">
-        <blackbox v-if="featureFlags.blackbox" :display-is-active="display == 'lfg'"></blackbox>
+        <blackbox v-if="featureFlags.blackbox" :display-is-active="display === 'LFG'"></blackbox>
 
-        <div class="basicbox">
-            <div class="header">Match Offers<div v-show="additionalOffers > 0" class="additionaloffers">Additional offers: {{ additionalOffers }}</div></div>
-            <div class="content" id="offerlistwrapper">
-                <div v-show="offers.length === 0" class="nooffers">Sorry, no current offers.</div>
-                <div id="offerlist" @mouseenter="setHoverBlock('OFFERS')" @mouseleave="setHoverBlock(null)">
-                    <div v-for="offer in offers" :key="offer.id" class="matchoffer">
-                        <div class="icon external" v-show="offer.external">?</div>
-                        <div class="icon accept" v-show="offer.external">&#x2714;</div>
-                        <div class="icon cancel" @click="cancelOffer(offer)">&#x2718;</div>
-                        <div class="offeredteam home">
-                            <div class="name">
-                                {{ abbreviate(offer.home.team, 30) }}
-                            </div>
-                            <div class="desc">
-                                TV {{offer.home.tv}} {{offer.home.race}}
-                            </div>
-                        </div>
-                        <div class="timer" :style="{ width: (100 * offer.timeRemaining / offer.lifetime) + '%', left: (50 - 50 * offer.timeRemaining / offer.lifetime) + '%'}"></div>
-                        <div class="offeredteam away">
-                            <div class="desc">
-                                {{offer.away.race}} TV {{offer.away.tv}}
-                            </div>
-                            <div class="name">
-                                {{ abbreviate(offer.away.team, 30) }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <offers :offers="offers" :hover-block="hoverBlock" @set-hover-block="setHoverBlock"></offers>
     </div>
 
     <div class="rightcolumn">
@@ -44,13 +15,13 @@
             <div class="overalllinks"><a href="#" @click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModalSettings">Settings</a></div>
         </div>
 
-        <teamcards v-show="display == 'lfg'" :my-teams="me.teams" @select="selectTeam"></teamcards>
+        <teamcards v-show="display === 'LFG'" :my-teams="me.teams" @select="selectTeam"></teamcards>
 
-        <lfgteams v-if="display == 'teams'" @show-lfg="showLfg"></lfgteams>
+        <lfgteams v-if="display === 'TEAMS'" @show-lfg="showLfg"></lfgteams>
 
-        <selectedownteam v-show="display == 'lfg'" :team="selectedOwnTeam" @deselect-team="deselectTeam" @open-modal-roster="openModalRoster" @open-modal-team-settings="openModalTeamSettings"></selectedownteam>
+        <selectedownteam v-show="display === 'LFG'" :team="selectedOwnTeam" @deselect-team="deselectTeam" @open-modal-roster="openModalRoster" @open-modal-team-settings="openModalTeamSettings"></selectedownteam>
 
-        <div id="opponentslist" v-show="display == 'lfg'" @mouseenter="setHoverBlock('OPPONENTS')" @mouseleave="setHoverBlock(null)">
+        <div id="opponentslist" v-show="display == 'LFG'" @mouseenter="setHoverBlock('OPPONENTS', true)" @mouseleave="setHoverBlock('OPPONENTS', false)">
             <div class="expandcollapseall" v-show="visibleOpponents.length > 0"><a href="#" @click.prevent="expandAllOpponents()">Expand</a> <a href="#" @click.prevent="collapseAllOpponents()">Collapse</a></div>
             <div>
                 <strong>{{ selectedOwnTeam ? 'Opponents filtered by selected team.' : 'All opponents on Gamefinder' }}</strong>

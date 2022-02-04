@@ -10,13 +10,16 @@ import TeamSettingsComponent from "./components/TeamSettings";
 import RosterComponent from "./components/Roster";
 import TeamCardsComponent from "./components/TeamCards";
 import SelectedOwnTeamComponent from "./components/SelectedOwnTeam";
+import OffersComponent from "./components/Offers";
 
 @Component
 export default class App extends Vue {
     private coachName:string|null = null;
 
+    public display: 'LFG' | 'TEAMS' | 'NONE' = 'LFG';
     public hoverBlock: 'OFFERS' | 'OPPONENTS' | null = null;
     public featureFlags = {blackbox: true};
+    public modalSettings: {roster: {teamId: number | null}, settings: boolean, teamSettings: {team: any}} = {roster: {teamId: null}, settings: false, teamSettings: {team: null}};
 
     public selectedOwnTeam:any = null;
     public me:any = { teams: [] };
@@ -28,14 +31,8 @@ export default class App extends Vue {
     public expandedForAllOpponents: number[] = [];
     private readHistory:Map<number,number[]> = new Map<number,number[]>();
 
-    public pendingOffers:any = [];
+    // the offers property is primarily managed by the OffersComponent, they're held here and passed to OffersComponent as a prop
     public offers:any = [];
-
-    public additionalOffers: number = 0;
-
-    public display: string = 'lfg';
-
-    public modalSettings: {roster: {teamId: number | null}, settings: boolean, teamSettings: {team: any}} = {roster: {teamId: null}, settings: false, teamSettings: {team: null}};
 
     private async getOpponents() {
         const result = await Axios.post('/api/gamefinder/teams')
@@ -62,32 +59,13 @@ export default class App extends Vue {
 
         this.pendingOpponents = data;
         this.opponentsNeedUpdate = true;
-        this.tick();
-    }
-
-    private async getOffers() {
-        const pre = Date.now();
-        const offers: any = await Axios.post('/api/gamefinder/getoffers', {cheatingCoachName: this.coachName});
-        const now = Date.now();
-
-        const avgTime = now / 2 + pre / 2;
-
-        for (const offer of offers.data) {
-            offer.expiry = avgTime + offer.timeRemaining;
-            offer.external = offer.team1.coach.name !== this.coachName
-            // Swap teams if the first team is the opponent's
-            if (offer.team2.coach.name === this.coachName) {
-                const x = offer.team1;
-                offer.team1 = offer.team2;
-                offer.team2 = x;
-            }
-            this.createOffer(offer);
-        }
+        this.processOpponents();
     }
 
     async mounted() {
         this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
 
+        // @christer remove this
         this.cheatCreateCoach();
 
         await this.activate();
@@ -96,13 +74,13 @@ export default class App extends Vue {
         this.updateAllowed();
         this.refreshSelection();
 
-        setInterval(this.tick, 100);
+        setInterval(this.processOpponents, 100);
         setInterval(this.getOpponents, 5000);
-        setInterval(this.getOffers, 1000);
 
         document.addEventListener('click', this.onOuterModalClick)
     }
 
+    // @christer remove this method
     /**
      * Creates coach and teams (if already exist nothing happens)
      */
@@ -127,67 +105,8 @@ export default class App extends Vue {
         this.me.teams = activeTeams;
     }
 
-    public tick() {
-        this.updateTimeRemaining();
-        this.processOffers();
-        this.processOpponents();
-    }
-
-    private updateTimeRemaining() {
-        const now = Date.now();
-        for (const o of this.offers) {
-            o.timeRemaining = o.expiry - now;
-        }
-    }
-
-    private processOffers() {
-        const now = Date.now();
-
-        // Process match offers
-        for (let i = this.offers.length - 1; i>=0; i--) {
-            if (this.offers[i].expiry < now) {
-                this.offers.splice(i, 1);
-            }
-        }
-
-        if (this.hoverBlock !== 'OFFERS') {
-            while(this.pendingOffers.length > 0) {
-                const newOffer = this.pendingOffers.pop();
-
-                let processed = false;
-                for (const o of this.offers) {
-                    if (newOffer.id == o.id) {
-                        processed = true;
-                        // Update expiry time just to be sure.
-                        o.timeRemaining = newOffer.expiry - now;
-                        o.expiry = newOffer.expiry;
-                    }
-                }
-
-                if (!processed) {
-                    this.offers.unshift(newOffer);
-                }
-            }
-            this.additionalOffers = 0;
-        } else {
-            let num = 0;
-            for (const pending of this.pendingOffers) {
-                let found = false;
-                for (const o of this.offers) {
-                    if (pending.id == o.id) {
-                        found = true;
-                    }
-                }
-                if (!found) {
-                    num++;
-                }
-            }
-            this.additionalOffers = num;
-        }
-    }
-
-    public setHoverBlock(uiToBlock: 'OFFERS' | 'OPPONENTS' | null) {
-        this.hoverBlock = uiToBlock;
+    public setHoverBlock(aspectToBlock: 'OFFERS' | 'OPPONENTS', isBlock: boolean) {
+        this.hoverBlock = isBlock ? aspectToBlock : null;
     }
 
     private processOpponents() {
@@ -494,43 +413,6 @@ export default class App extends Vue {
         this.applyTeamFilters();
     }
 
-    private offerIsAlreadyPending(offerId: number): boolean {
-        for (const pendingOffer of this.pendingOffers) {
-            if (pendingOffer.id === offerId) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private createOffer(offerData) {
-        if (this.offerIsAlreadyPending(offerData.id)) {
-            return;
-        }
-
-        let offer = {
-            id: offerData.id,
-            expiry: offerData.expiry,
-            timeRemaining: offerData.timeRemaining,
-            lifetime: offerData.lifetime,
-            external: offerData.external,
-            home: {
-                id: offerData.team1.id,
-                team: offerData.team1.name,
-                race: offerData.team1.race.name,
-                tv: (offerData.team1.teamValue / 1000) + 'k',
-            },
-            away: {
-                id: offerData.team2.id,
-                team: offerData.team2.name,
-                race: offerData.team2.race.name,
-                tv: (offerData.team2.teamValue / 1000) + 'k'
-            }
-        };
-
-        this.pendingOffers.unshift(offer);
-    }
-
     public sendOffer(team) {
         let ownId = parseInt(this.selectedOwnTeam.id);
         let oppId = parseInt(team.id);
@@ -553,20 +435,8 @@ export default class App extends Vue {
         return this.findOfferForTeam(team) ? true : false;
     }
 
-    public cancelOfferByTeam(team) {
-        const offer = this.findOfferForTeam(team)
-        this.cancelOffer(offer)
-    }
-
-    public cancelOffer(offer) {
-        let index = this.offers.indexOf(offer);
-        if (index !== -1) {
-            this.offers.splice(index,1);
-        }
-    }
-
     public async showLfg() {
-        this.display='none';
+        this.display = 'NONE';
 
         await this.activate();
 
@@ -582,11 +452,11 @@ export default class App extends Vue {
         await this.updateAllowed();
         this.refreshSelection();
 
-        this.display='lfg';
+        this.display = 'LFG';
     }
 
     public async showTeams() {
-        this.display='teams';
+        this.display = 'TEAMS';
     }
 
     public get visibleOpponents(): any[] {
@@ -609,6 +479,7 @@ const app = new App({
         'teamsettings': TeamSettingsComponent,
         'roster': RosterComponent,
         'teamcards': TeamCardsComponent,
-        'selectedownteam': SelectedOwnTeamComponent
+        'selectedownteam': SelectedOwnTeamComponent,
+        'offers': OffersComponent
     }
 });
