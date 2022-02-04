@@ -8,6 +8,8 @@ import BlackboxComponent from "./components/Blackbox";
 import SettingsComponent from "./components/Settings";
 import TeamSettingsComponent from "./components/TeamSettings";
 import RosterComponent from "./components/Roster";
+import TeamCardsComponent from "./components/TeamCards";
+import SelectedOwnTeamComponent from "./components/SelectedOwnTeam";
 
 @Component
 export default class App extends Vue {
@@ -16,7 +18,7 @@ export default class App extends Vue {
     public hoverBlock: 'OFFERS' | 'OPPONENTS' | null = null;
     public featureFlags = {blackbox: true};
 
-    public selectedOwnTeam:any = false;
+    public selectedOwnTeam:any = null;
     public me:any = { teams: [] };
 
     private opponentsNeedUpdate: boolean;
@@ -398,30 +400,29 @@ export default class App extends Vue {
         }
     }
 
+    public deselectTeam() {
+        this.selectedOwnTeam.selected = false;
+        this.selectedOwnTeam = null;
+        this.refreshSelection();
+    }
+
     public selectTeam(team) {
         for (let myTeam of this.me.teams) {
             myTeam.selected = false;
         }
 
+        this.selectedOwnTeam = team;
+        team.selected = true;
         team.hasUnreadItems = false;
 
-        if (team.id === this.selectedOwnTeam.id) {
-            this.selectedOwnTeam = null;
-            team.selected = false;
-
-        } else {
-            this.selectedOwnTeam = team;
-            team.selected = true;
-
-            // update the read history for the selected team
-            if (! this.readHistory.has(this.selectedOwnTeam.id)) {
-                this.readHistory.set(this.selectedOwnTeam.id, []);
-            }
-            const teamReadHistory = this.readHistory.get(this.selectedOwnTeam.id);
-            for (const oppTeamId of team.allow) {
-                if (! teamReadHistory.includes(oppTeamId))
-                teamReadHistory.push(oppTeamId);
-            }
+        // update the read history for the selected team
+        if (! this.readHistory.has(this.selectedOwnTeam.id)) {
+            this.readHistory.set(this.selectedOwnTeam.id, []);
+        }
+        const teamReadHistory = this.readHistory.get(this.selectedOwnTeam.id);
+        for (const oppTeamId of team.allow) {
+            if (! teamReadHistory.includes(oppTeamId))
+            teamReadHistory.push(oppTeamId);
         }
 
         this.refreshSelection();
@@ -487,7 +488,7 @@ export default class App extends Vue {
 
         // No visible own team selected, so we make sure the state reflects that
         if (!ownTeamSelected) {
-            this.selectedOwnTeam = false;
+            this.selectedOwnTeam = null;
         }
 
         this.applyTeamFilters();
@@ -537,6 +538,10 @@ export default class App extends Vue {
     }
 
     private findOfferForTeam(team) {
+        if (! this.selectedOwnTeam) {
+            return false;
+        }
+
         for (const offer of this.offers) {
             if (offer.home.id == this.selectedOwnTeam.id && offer.away.id === team.id) {
                 return offer;
@@ -602,6 +607,8 @@ const app = new App({
         'blackbox': BlackboxComponent,
         'settings': SettingsComponent,
         'teamsettings': TeamSettingsComponent,
-        'roster': RosterComponent
+        'roster': RosterComponent,
+        'teamcards': TeamCardsComponent,
+        'selectedownteam': SelectedOwnTeamComponent
     }
 });

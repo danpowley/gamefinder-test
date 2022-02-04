@@ -44,53 +44,11 @@
             <div class="overalllinks"><a href="#" @click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModalSettings">Settings</a></div>
         </div>
 
-        <div id="teamcards" v-show="display == 'lfg'">
-
-            <div v-for="myTeam in me.teams" :key="myTeam.id" @click="selectTeam(myTeam)"
-                class="teamcard" :class="{active: myTeam.selected}"
-                :title="myTeam.name + '\n' + myTeam.race + '\n' + myTeam.division + (myTeam.league.name !== undefined ? ' (' + myTeam.league.name + ')' : '')">
-                <div class="cardlogo"><img :src="'https://fumbbl.com/i/' + myTeam.raceLogos[0].logo"></div>
-                <div class="cardinfo">
-                    <div class="teaminfo">
-                        <div class="divisionletter">[{{ myTeam.division.charAt(0) }}{{ myTeam.league.name ? '*' : '' }}]</div>{{
-                        myTeam.teamValue/1000 }}k
-                    </div>
-                    <div class="opponentinfo">
-                        Oppo:
-                        <div class="allowedopponents" :title="myTeam.allow.length + ' possible opponents'">
-                            <span class="newopponentsicon" v-show="myTeam.hasUnreadItems">&#9679</span>{{ myTeam.allow.length }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+        <teamcards v-show="display == 'lfg'" :my-teams="me.teams" @select="selectTeam"></teamcards>
 
         <lfgteams v-if="display == 'teams'" @show-lfg="showLfg"></lfgteams>
 
-        <div id="selectedownteam" v-show="display == 'lfg'">
-            <template v-if="selectedOwnTeam">
-                <div class="logo">
-                    <img :src="'https://fumbbl.com/i/' + selectedOwnTeam.raceLogos[0].logo" />
-                </div>
-                <div class="teamdetails">
-                    <div class="teamname"><a href="#" @click.prevent="openModalRoster">{{ abbreviate(selectedOwnTeam.name, 65) }}</a></div>
-                    <div class="teaminfo"><span title="Seasons and games played">S{{ selectedOwnTeam.currentSeason }}:G{{ selectedOwnTeam.gamesPlayedInSeason }}</span> TV {{ selectedOwnTeam.teamValue/1000 }}k {{ selectedOwnTeam.race }}</div>
-                </div>
-                <div class="teamextras">
-                    <div class="divisionleagueinfo">{{ selectedOwnTeam.division }}</div>
-                    <div class="teamlinks">
-                        <a href="#" @click.prevent="openModalTeamSettings">Settings</a>
-                        <a href="#" @click.prevent="selectTeam(selectedOwnTeam)">Deselect</a>
-                    </div>
-                </div>
-            </template>
-            <template v-else>
-                <div>
-                    <strong>No team selected.</strong> To make an offer, select one of your teams above and the list of opponents will be filtered to match that team.
-                </div>
-            </template>
-        </div>
+        <selectedownteam v-show="display == 'lfg'" :team="selectedOwnTeam" @deselect-team="deselectTeam" @open-modal-roster="openModalRoster" @open-modal-team-settings="openModalTeamSettings"></selectedownteam>
 
         <div id="opponentslist" v-show="display == 'lfg'" @mouseenter="setHoverBlock('OPPONENTS')" @mouseleave="setHoverBlock(null)">
             <div class="expandcollapseall" v-show="visibleOpponents.length > 0"><a href="#" @click.prevent="expandAllOpponents()">Expand</a> <a href="#" @click.prevent="collapseAllOpponents()">Collapse</a></div>
