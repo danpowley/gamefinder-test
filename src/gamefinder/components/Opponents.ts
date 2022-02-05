@@ -31,6 +31,7 @@ import { Util } from '../../core/util';
                 <div v-show="isExpanded(opponent)">
                     <div v-for="oppTeam in opponent.teams" v-if="oppTeam.visible" :key="oppTeam.id" class="team">
                         <div class="logo">
+                            <!-- @christer absolute url and fragile logo access. -->
                             <img :src="'https://fumbbl.com/i/' + oppTeam.raceLogos[0].logo" />
                         </div>
                         <div class="details">
@@ -58,6 +59,10 @@ import { Util } from '../../core/util';
         </div>
     `,
     props: {
+        coachName: {
+            type: String,
+            required: true
+        },
         opponentMap: {
             type: Map,
             required: true
@@ -86,8 +91,6 @@ import { Util } from '../../core/util';
     }
 })
 export default class OpponentsComponent extends Vue {
-    private coachName: string | null = null;
-
     private uiUpdatesPaused: boolean = false;
 
     public opponents:any = {};
@@ -96,8 +99,6 @@ export default class OpponentsComponent extends Vue {
     public expandedForAllOpponents: number[] = [];
 
     async mounted() {
-        this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
-
         await this.getOpponents();
 
         setInterval(this.processOpponents, 100);
@@ -123,7 +124,7 @@ export default class OpponentsComponent extends Vue {
         }], this.$set);
 
         for(let i = data.length - 1; i >= 0; i--) {
-            if (data[i].name === this.coachName) {
+            if (data[i].name === this.$props.coachName) {
                 data.splice(i, 1);
             }
         }
@@ -299,7 +300,7 @@ export default class OpponentsComponent extends Vue {
         this.$props.opponentTeamIdsWithOffersFromSelectedOwnTeam.push(oppId);
     }
 
-    private hasOfferFromSelectedOwnTeam(team) {
+    public hasOfferFromSelectedOwnTeam(team) {
         return this.$props.opponentTeamIdsWithOffersFromSelectedOwnTeam.includes(team.id);
     }
 
@@ -315,7 +316,7 @@ export default class OpponentsComponent extends Vue {
         this.$emit('open-modal', name, modalSettings);
     }
 
-    private abbreviate(stringValue: string, maxCharacters: number) {
+    public abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
     }
 }

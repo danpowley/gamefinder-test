@@ -20,8 +20,9 @@ import { Util } from '../../core/util';
     `,
     props: {
         team: {
-            type: Object,
-            required: true
+            validator: function (team) {
+                return typeof team === 'object' || team === null;
+            }
         }
     },
     watch: {
@@ -34,17 +35,13 @@ export default class RosterComponent extends Vue {
     private rosterData = null;
     private rosterCache:any = {};
 
-    public get team() {
-        return this.$props.team;
-    }
-
     private async loadRosterData() {
-        if (this.team === null) {
+        if (this.$props.team === null) {
             this.rosterData = null;
             return;
         }
 
-        const rosterData = await this.getRoster(this.team.id);
+        const rosterData = await this.getRoster(this.$props.team.id);
         this.rosterData = rosterData;
     }
 

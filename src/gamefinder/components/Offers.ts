@@ -37,6 +37,10 @@ import { Util } from '../../core/util';
         </div>
     `,
     props: {
+        coachName: {
+            type: String,
+            required: true
+        },
         offers: {
             type: Array,
             required: true
@@ -44,14 +48,12 @@ import { Util } from '../../core/util';
     }
 })
 export default class OffersComponent extends Vue {
-    private coachName: string | null = null;
     public additionalOffers: number = 0;
     public pendingOffers:any = [];
 
     private uiUpdatesPaused: boolean = false;
 
     async mounted() {
-        this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
         setInterval(this.tick, 100);
         setInterval(this.getOffers, 1000);
     }
@@ -70,16 +72,16 @@ export default class OffersComponent extends Vue {
 
     private async getOffers() {
         const pre = Date.now();
-        const offers: any = await Axios.post('/api/gamefinder/getoffers', {cheatingCoachName: this.coachName});
+        const offers: any = await Axios.post('/api/gamefinder/getoffers', {cheatingCoachName: this.$props.coachName});
         const now = Date.now();
 
         const avgTime = now / 2 + pre / 2;
 
         for (const offer of offers.data) {
             offer.expiry = avgTime + offer.timeRemaining;
-            offer.external = offer.team1.coach.name !== this.coachName
+            offer.external = offer.team1.coach.name !== this.$props.coachName
             // Swap teams if the first team is the opponent's
-            if (offer.team2.coach.name === this.coachName) {
+            if (offer.team2.coach.name === this.$props.coachName) {
                 const x = offer.team1;
                 offer.team1 = offer.team2;
                 offer.team2 = x;
@@ -175,7 +177,7 @@ export default class OffersComponent extends Vue {
         this.uiUpdatesPaused = isPaused;
     }
 
-    private abbreviate(stringValue: string, maxCharacters: number) {
+    public abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
     }
 }

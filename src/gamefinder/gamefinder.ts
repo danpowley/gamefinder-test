@@ -15,8 +15,7 @@ import OpponentsComponent from "./components/Opponents";
 
 @Component
 export default class App extends Vue {
-    private coachName:string|null = null;
-
+    public coachName: string | null = null;
     public display: 'LFG' | 'TEAMS' | 'NONE' = 'LFG';
     public featureFlags = {blackbox: true};
 
@@ -31,16 +30,17 @@ export default class App extends Vue {
     // the offers property is primarily managed by the OffersComponent, they're held here and passed to OffersComponent as a prop
     public offers:any = [];
 
+    public blackboxData: {available: number, chosen: number} = {available: 0, chosen: 0};
+
     public modalRosterTeam: any | null = null;
     public modalTeamSettingsTeam: any | null = null;
     public modalSettingsShow: boolean = false;
 
+    created() {
+        this.coachName = coachNameFromDom();
+    }
+
     async mounted() {
-        this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
-
-        // @christer remove this
-        this.cheatCreateCoach();
-
         await this.activate();
 
         this.refresh();
@@ -48,17 +48,11 @@ export default class App extends Vue {
         document.addEventListener('click', this.onOuterModalClick)
     }
 
-    // @christer remove this method
-    /**
-     * Creates coach and teams (if already exist nothing happens)
-     */
-    private async cheatCreateCoach() {
-        await Axios.post('/api/gamefinder/addcheatingcoach', {cheatingCoachName: this.coachName});
-    }
-
     public async activate() {
-        await Axios.post('/api/gamefinder/activate', {cheatingCoachName: this.coachName})
-        const result = await Axios.post('/api/gamefinder/coachteams', {cheatingCoachName: this.coachName});
+        // @christer cheatingCoachName can be removed from post body
+        await Axios.post('/api/gamefinder/activate', {cheatingCoachName: coachNameFromDom()})
+        // @christer cheatingCoachName can be removed from post body
+        const result = await Axios.post('/api/gamefinder/coachteams', {cheatingCoachName: coachNameFromDom()});
         const activeTeams = result.data.teams;
 
         Util.applyDeepDefaults(activeTeams, [{
@@ -227,6 +221,10 @@ export default class App extends Vue {
         this.refresh();
     }
 
+    public handleBlackboxData(blackboxData: {available: number, chosen: number}) {
+        this.blackboxData = blackboxData;
+    }
+
     private onOuterModalClick(e) {
         const clickTarget = e.target;
         const modals = [
@@ -239,7 +237,7 @@ export default class App extends Vue {
         }
     }
 
-    private openModal(modalName: string, modalSettings: any) {
+    public openModal(modalName: string, modalSettings: any) {
         this.closeModal();
         if (modalName === 'ROSTER') {
             this.modalRosterTeam = modalSettings.team;
@@ -250,7 +248,7 @@ export default class App extends Vue {
         }
     }
 
-    private closeModal() {
+    public closeModal() {
         this.modalRosterTeam = null;
         this.modalTeamSettingsTeam = null;
         this.modalSettingsShow = false;
@@ -274,17 +272,22 @@ export default class App extends Vue {
     }
 }
 
-const app = new App({
-    el: '#vuecontent',
-    components: {
-        'lfgteams': LfgTeamsComponent,
-        'blackbox': BlackboxComponent,
-        'settings': SettingsComponent,
-        'teamsettings': TeamSettingsComponent,
-        'roster': RosterComponent,
-        'teamcards': TeamCardsComponent,
-        'selectedownteam': SelectedOwnTeamComponent,
-        'offers': OffersComponent,
-        'opponents': OpponentsComponent
-    }
+const coachNameFromDom = () => document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
+
+// @christer post here made to ensure the coach data is in our data store (not relevant for live system)
+Axios.post('/api/gamefinder/addcheatingcoach', {cheatingCoachName: coachNameFromDom()}).then(() => {
+    const app = new App({
+        el: '#vuecontent',
+        components: {
+            'lfgteams': LfgTeamsComponent,
+            'blackbox': BlackboxComponent,
+            'settings': SettingsComponent,
+            'teamsettings': TeamSettingsComponent,
+            'roster': RosterComponent,
+            'teamcards': TeamCardsComponent,
+            'selectedownteam': SelectedOwnTeamComponent,
+            'offers': OffersComponent,
+            'opponents': OpponentsComponent
+        }
+    });
 });

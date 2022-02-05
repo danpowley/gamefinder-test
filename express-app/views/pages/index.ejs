@@ -3,20 +3,25 @@
 <div class="gamefinder" id="vuecontent" coach="<%= coachName %>">
 
     <div class="leftcolumn">
-        <blackbox v-if="featureFlags.blackbox" :display-is-active="display === 'LFG'"></blackbox>
+        <blackbox
+            v-if="featureFlags.blackbox"
+            :display-is-active="display === 'LFG'"
+            :available="blackboxData.available"
+            :chosen="blackboxData.chosen"></blackbox>
 
-        <offers :offers="offers"></offers>
+        <offers :offers="offers" :coach-name="coachName"></offers>
     </div>
 
     <div class="rightcolumn">
         <div id="overallstatus">
-            <%= coachName %>: You have {{ me.teams.length }} team{{ me.teams.length === 1 ? '' : 's' }} looking for a game.
+            {{ coachName }}: You have {{ me.teams.length }} team{{ me.teams.length === 1 ? '' : 's' }} looking for a game.
             <div class="overalllinks"><a href="#" @click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModal('SETTINGS', {})">Settings</a></div>
         </div>
 
         <teamcards v-show="display === 'LFG'" :my-teams="me.teams" @select="selectTeam"></teamcards>
 
-        <lfgteams v-if="display === 'TEAMS'" @show-lfg="showLfg"></lfgteams>
+        <!-- We use v-if here because we want the component to be mounted each time display changes and force a reload of team data -->
+        <lfgteams v-if="display === 'TEAMS'" :coach-name="coachName" @show-lfg="showLfg" @blackbox-data="handleBlackboxData"></lfgteams>
 
         <selectedownteam
             v-show="display === 'LFG'"
@@ -26,6 +31,7 @@
 
         <opponents
             v-show="display == 'LFG'"
+            :coach-name="coachName"
             :opponent-map="opponentMap"
             :opponents-refresh-required="opponentsRefreshRequired"
             :selected-own-team="selectedOwnTeam"

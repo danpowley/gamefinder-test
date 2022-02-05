@@ -12,6 +12,7 @@ import GameFinderPolicies from '../GameFinderPolicies';
                 <div class="lfgList">
                     <div v-for="team in teams" :key="team.id" class="lfgteam">
                         <input class="teamcheck" type="checkbox" :value="team.id" v-model="checked" @change="toggleTeam">
+                        <!-- @christer Absolute url use for icon. Fragile technique for accessing logo. -->
                         <img :src="'https://fumbbl.com/i/' + team.raceLogos[0].logo" />
                         <div>
                             <div class="teamname">{{ abbreviate(team.name, 70) }}</div>
@@ -30,47 +31,64 @@ import GameFinderPolicies from '../GameFinderPolicies';
         </div>
     `,
     props: {
+        coachName: {
+            type: String,
+            required: true
+        }
     }
 })
 export default class LfgTeamsComponent extends Vue {
-    private coachName: string | null = null;
-    private teams: any[] = [];
-    private checked: boolean[] = [];
+    public teams: any[] = [];
+    public checked: boolean[] = [];
 
     async mounted() {
-        this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
         await this.reloadTeams();
-        this.updateAllChecked();
     }
 
-    private abbreviate(stringValue: string, maxCharacters: number) {
+    public abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
     }
 
-    private showLfg() {
+    public async showLfg() {
+        await this.updateBlackboxData();
         this.$emit('show-lfg');
     }
 
     private async reloadTeams() {
-        const result = await Axios.post('/api/coach/teams/' + this.coachName);
-        let allTeams = result.data.teams;
-
-        const teams = allTeams.filter((team) => team.canLfg == 'Yes' && team.status == 'Active');
+        const teams = await this.getTeamsCanLfg();
         teams.sort(GameFinderPolicies.sortTeamByDivisionNameLeagueNameTeamName);
+        this.teams = teams;
 
         this.checked = teams.filter((team) => team.isLfg == 'Yes').map((team) => team.id);
-        this.teams = teams;
 
         this.updateAllChecked();
     }
 
-    private toggleAll(event) {
+    private async getTeamsCanLfg() {
+        const result = await Axios.post('/api/coach/teams/' + this.$props.coachName);
+        let allTeams = result.data.teams;
+        const teams = allTeams.filter((team) => team.canLfg == 'Yes' && team.status == 'Active');
+        return teams;
+    }
+
+    private async updateBlackboxData() {
+        const teams = await this.getTeamsCanLfg();
+        const availableTeams = teams.filter((team) => team.division === 'Competitive');
+        const chosenTeams = availableTeams.filter((team) => team.isLfg === 'Yes');
+
+        this.$emit('blackbox-data', {
+            available: availableTeams.length,
+            chosen: chosenTeams.length
+        });
+    }
+
+    public toggleAll(event) {
         const checked = event.target.checked;
 
         if (checked) {
-            Axios.post('/api/gamefinder/addallteams', {cheatingCoachName: this.coachName});
+            Axios.post('/api/gamefinder/addallteams', {cheatingCoachName: this.$props.coachName});
         } else {
-            Axios.post('/api/gamefinder/removeallteams', {cheatingCoachName: this.coachName});
+            Axios.post('/api/gamefinder/removeallteams', {cheatingCoachName: this.$props.coachName});
         }
 
         const checkboxes = document.getElementsByClassName('teamcheck');
@@ -88,7 +106,7 @@ export default class LfgTeamsComponent extends Vue {
         this.updateAllChecked();
     }
 
-    private toggleTeam(event) {
+    public toggleTeam(event) {
         const target = event.target;
         const checked = target.checked;
         const id = target.value;
@@ -105,18 +123,9 @@ export default class LfgTeamsComponent extends Vue {
     private updateAllChecked()
     {
         const allCheckbox:any = document.getElementById('all');
-        const checkboxes = document.getElementsByClassName('teamcheck');
 
-        let allChecked = true;
-        let allUnchecked = true;
-        for (let index=0; index<checkboxes.length; index++) {
-            const c:any = checkboxes[index];
-            if (c.checked) {
-                allUnchecked = false;
-            } else {
-                allChecked = false;
-            }
-        }
+        let allChecked = this.teams.length === this.checked.length;
+        let allUnchecked = this.checked.length === 0;
 
         if (allUnchecked) {
             allCheckbox.checked = false;

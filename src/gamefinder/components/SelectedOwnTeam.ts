@@ -46,7 +46,7 @@ export default class SelectedOwnTeamComponent extends Vue {
         this.$emit('open-modal', name, modalSettings);
     }
 
-    private abbreviate(stringValue: string, maxCharacters: number) {
+    public abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
     }
 }
