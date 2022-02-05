@@ -18,7 +18,6 @@ export default class App extends Vue {
     private coachName:string|null = null;
 
     public display: 'LFG' | 'TEAMS' | 'NONE' = 'LFG';
-    public hoverBlock: 'OFFERS' | 'OPPONENTS' | null = null;
     public featureFlags = {blackbox: true};
     public modalSettings: {roster: {teamId: number | null}, settings: boolean, teamSettings: {team: any}} = {roster: {teamId: null}, settings: false, teamSettings: {team: null}};
 
@@ -267,10 +266,6 @@ export default class App extends Vue {
     //     }
     //     return false;
     // }
-
-    public setHoverBlock(aspectToBlock: 'OFFERS' | 'OPPONENTS', isBlock: boolean) {
-        this.hoverBlock = isBlock ? aspectToBlock : null;
-    }
 
     public setOpponentsRefreshRequired() {
         this.opponentsRefreshRequired = true;

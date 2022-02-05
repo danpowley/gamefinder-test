@@ -5,10 +5,15 @@ import { Util } from '../../core/util';
 
 @Component({
     template: `
-        <div id="opponentslist" @mouseenter="setHoverBlock(true)" @mouseleave="setHoverBlock(false)">
+        <div id="opponentslist" @mouseenter="setUiUpdatesPaused(true)" @mouseleave="setUiUpdatesPaused(false)">
             <div class="expandcollapseall" v-show="visibleOpponents.length > 0"><a href="#" @click.prevent="expandAllOpponents()">Expand</a> <a href="#" @click.prevent="collapseAllOpponents()">Collapse</a></div>
             <div>
                 <strong>{{ isOwnTeamSelected ? 'Opponents filtered by selected team.' : 'All opponents on Gamefinder' }}</strong>
+                <span
+                    v-show="uiUpdatesPaused"
+                    class="frozentag"
+                    title="New opponents won't be added/removed until you move your mouse away from this area. This is to prevent the page moving whilst you browse opponents."
+                    >Frozen</span>
             </div>
             <div v-show="visibleOpponents.length === 0">No opponents available.</div>
             <div v-for="opponent in visibleOpponents" :key="opponent.id" class="opponent">
@@ -69,11 +74,6 @@ import { Util } from '../../core/util';
         opponentTeamIdsWithOffersFromSelectedOwnTeam: {
             type: Array,
             required: true
-        },
-        hoverBlock: {
-            validator: function (hoverBlock) {
-                return hoverBlock === 'OFFERS' || hoverBlock === 'OPPONENTS' || hoverBlock === null;
-            }
         }
     },
     watch: {
@@ -87,6 +87,8 @@ import { Util } from '../../core/util';
 })
 export default class OpponentsComponent extends Vue {
     private coachName: string | null = null;
+
+    private uiUpdatesPaused: boolean = false;
 
     public opponents:any = {};
     public pendingOpponents: any = [];
@@ -135,7 +137,7 @@ export default class OpponentsComponent extends Vue {
         // Process updated opponent list
         if (this.opponentsNeedUpdate) {
             this.opponentsNeedUpdate = false;
-            if (this.$props.hoverBlock !== 'OPPONENTS') {
+            if (! this.uiUpdatesPaused) {
                 // Mark all current opponents as dirty
                 this.$props.opponentMap.forEach((o, k) => {
                     this.$props.opponentMap.get(k).dirty = true;
@@ -305,8 +307,8 @@ export default class OpponentsComponent extends Vue {
         this.$emit('refresh');
     }
 
-    public setHoverBlock(isBlock: boolean) {
-        this.$emit('set-hover-block', 'OPPONENTS', isBlock);
+    public setUiUpdatesPaused(isPaused: boolean) {
+        this.uiUpdatesPaused = isPaused;
     }
 
     public openModalRosterForTeamId(teamId: number) {

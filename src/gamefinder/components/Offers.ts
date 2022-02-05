@@ -9,7 +9,7 @@ import { Util } from '../../core/util';
             <div class="header">Match Offers<div v-show="additionalOffers > 0" class="additionaloffers">Additional offers: {{ additionalOffers }}</div></div>
             <div class="content" id="offerlistwrapper">
                 <div v-show="offers.length === 0" class="nooffers">Sorry, no current offers.</div>
-                <div id="offerlist" @mouseenter="setHoverBlock(true)" @mouseleave="setHoverBlock(false)">
+                <div id="offerlist" @mouseenter="setUiUpdatesPaused(true)" @mouseleave="setUiUpdatesPaused(false)">
                     <div v-for="offer in offers" :key="offer.id" class="matchoffer">
                         <div class="icon external" v-show="offer.external">?</div>
                         <div class="icon accept" v-show="offer.external">&#x2714;</div>
@@ -40,11 +40,6 @@ import { Util } from '../../core/util';
         offers: {
             type: Array,
             required: true
-        },
-        hoverBlock: {
-            validator: function (hoverBlock) {
-                return hoverBlock === 'OFFERS' || hoverBlock === 'OPPONENTS' || hoverBlock === null;
-            }
         }
     }
 })
@@ -52,6 +47,8 @@ export default class OffersComponent extends Vue {
     private coachName: string | null = null;
     public additionalOffers: number = 0;
     public pendingOffers:any = [];
+
+    private uiUpdatesPaused: boolean = false;
 
     async mounted() {
         this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
@@ -101,7 +98,7 @@ export default class OffersComponent extends Vue {
             }
         }
 
-        if (this.$props.hoverBlock !== 'OFFERS') {
+        if (! this.uiUpdatesPaused) {
             while(this.pendingOffers.length > 0) {
                 const newOffer = this.pendingOffers.pop();
 
@@ -174,8 +171,8 @@ export default class OffersComponent extends Vue {
         this.pendingOffers.unshift(offer);
     }
 
-    public setHoverBlock(isBlock) {
-        this.$emit('set-hover-block', 'OFFERS', isBlock);
+    public setUiUpdatesPaused(isPaused: boolean) {
+        this.uiUpdatesPaused = isPaused;
     }
 
     private abbreviate(stringValue: string, maxCharacters: number) {

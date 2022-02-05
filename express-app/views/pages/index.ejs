@@ -5,7 +5,7 @@
     <div class="leftcolumn">
         <blackbox v-if="featureFlags.blackbox" :display-is-active="display === 'LFG'"></blackbox>
 
-        <offers :offers="offers" :hover-block="hoverBlock" @set-hover-block="setHoverBlock"></offers>
+        <offers :offers="offers"></offers>
     </div>
 
     <div class="rightcolumn">
@@ -31,10 +31,8 @@
             :opponents-refresh-required="opponentsRefreshRequired"
             :selected-own-team="selectedOwnTeam"
             :opponent-team-ids-with-offers-from-selected-own-team="opponentTeamIdsWithOffersFromSelectedOwnTeam"
-            :hover-block="hoverBlock"
             @refresh="refresh"
             @opponents-refreshed="setOpponentsRefreshed"
-            @set-hover-block="setHoverBlock"
             @open-modal-roster="openModalRosterForTeamId"></opponents>
     </div>
 
