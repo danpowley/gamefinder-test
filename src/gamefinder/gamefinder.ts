@@ -19,7 +19,6 @@ export default class App extends Vue {
 
     public display: 'LFG' | 'TEAMS' | 'NONE' = 'LFG';
     public featureFlags = {blackbox: true};
-    public modalSettings: {roster: {teamId: number | null}, settings: boolean, teamSettings: {team: any}} = {roster: {teamId: null}, settings: false, teamSettings: {team: null}};
 
     public selectedOwnTeam:any = null;
     public opponentTeamIdsWithOffersFromSelectedOwnTeam: number[] = [];
@@ -31,6 +30,10 @@ export default class App extends Vue {
 
     // the offers property is primarily managed by the OffersComponent, they're held here and passed to OffersComponent as a prop
     public offers:any = [];
+
+    public modalRosterTeam: any | null = null;
+    public modalTeamSettingsTeam: any | null = null;
+    public modalSettingsShow: boolean = false;
 
     async mounted() {
         this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
@@ -236,26 +239,21 @@ export default class App extends Vue {
         }
     }
 
-    public openModalRosterForTeamId(teamId) {
-        this.modalSettings.roster.teamId = teamId;
+    private openModal(modalName: string, modalSettings: any) {
+        this.closeModal();
+        if (modalName === 'ROSTER') {
+            this.modalRosterTeam = modalSettings.team;
+        } else if (modalName === 'TEAM_SETTINGS') {
+            this.modalTeamSettingsTeam = modalSettings.team;
+        } else if (modalName === 'SETTINGS') {
+            this.modalSettingsShow = true;
+        }
     }
 
-    public openModalRoster() {
-        this.openModalRosterForTeamId(this.selectedOwnTeam.id);
-    }
-
-    public openModalSettings() {
-        this.modalSettings.settings = true;
-    }
-
-    public openModalTeamSettings() {
-        this.modalSettings.teamSettings.team = this.selectedOwnTeam;
-    }
-
-    public closeModal() {
-        this.modalSettings.roster.teamId = null;
-        this.modalSettings.settings = false;
-        this.modalSettings.teamSettings.team = null;
+    private closeModal() {
+        this.modalRosterTeam = null;
+        this.modalTeamSettingsTeam = null;
+        this.modalSettingsShow = false;
     }
 
     // public teamLogo(team: any): number | false {

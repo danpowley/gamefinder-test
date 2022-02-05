@@ -19,17 +19,14 @@ import { Util } from '../../core/util';
         </div>
     `,
     props: {
-        modalSettings: {
+        team: {
             type: Object,
             required: true
         }
     },
     watch: {
-        modalSettings: {
-            handler: function () {
-                this.loadRosterData();
-            },
-            deep: true
+        team: function () {
+            return this.loadRosterData();
         }
     }
 })
@@ -37,22 +34,22 @@ export default class RosterComponent extends Vue {
     private rosterData = null;
     private rosterCache:any = {};
 
-    public get teamId() {
-        return this.$props.modalSettings.roster.teamId;
+    public get team() {
+        return this.$props.team;
     }
 
     private async loadRosterData() {
-        if (this.teamId === null) {
+        if (this.team === null) {
             this.rosterData = null;
             return;
         }
 
-        const rosterData = await this.getRoster(this.teamId);
+        const rosterData = await this.getRoster(this.team.id);
         this.rosterData = rosterData;
     }
 
     private close() {
-        this.$props.modalSettings.roster.teamId = null;
+        this.$emit('close-modal');
     }
 
     private async getRoster(teamId) {

@@ -3,7 +3,7 @@ import Component from 'vue-class-component';
 
 @Component({
     template: `
-        <div v-if="visible" class="settingsouter">
+        <div v-if="isOpen" class="settingsouter">
             <div class="settingsinner">
                 <a href="#" class="closemodal" @click.prevent="close">&times;</a>
                 <div class="settingstitle">Gamefinder settings for ALL teams</div>
@@ -19,18 +19,14 @@ import Component from 'vue-class-component';
         </div>
     `,
     props: {
-        modalSettings: {
-            type: Object,
+        isOpen: {
+            type: Boolean,
             required: true
         }
     }
 })
 export default class SettingsComponent extends Vue {
-    public get visible() {
-        return this.$props.modalSettings.settings;
-    }
-
     private close() {
-        this.$props.modalSettings.settings = false;
+        this.$emit('close-modal');
     }
 }

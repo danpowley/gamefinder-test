@@ -23,22 +23,19 @@ import { Util } from '../../core/util';
         </div>
     `,
     props: {
-        modalSettings: {
-            type: Object,
-            required: true
+        team: {
+            validator: function (teamId) {
+                return typeof teamId === 'object' || teamId === null;
+            }
         }
     }
 })
 export default class TeamSettingsComponent extends Vue {
-    public get team() {
-        return this.$props.modalSettings.teamSettings.team;
-    }
-
     private abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
     }
 
     private close() {
-        this.$props.modalSettings.teamSettings.team = null;
+        this.$emit('close-modal');
     }
 }

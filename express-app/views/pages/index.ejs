@@ -11,7 +11,7 @@
     <div class="rightcolumn">
         <div id="overallstatus">
             <%= coachName %>: You have {{ me.teams.length }} team{{ me.teams.length === 1 ? '' : 's' }} looking for a game.
-            <div class="overalllinks"><a href="#" @click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModalSettings">Settings</a></div>
+            <div class="overalllinks"><a href="#" @click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModal('SETTINGS', {})">Settings</a></div>
         </div>
 
         <teamcards v-show="display === 'LFG'" :my-teams="me.teams" @select="selectTeam"></teamcards>
@@ -22,8 +22,7 @@
             v-show="display === 'LFG'"
             :team="selectedOwnTeam"
             @deselect-team="deselectTeam"
-            @open-modal-roster="openModalRoster"
-            @open-modal-team-settings="openModalTeamSettings"></selectedownteam>
+            @open-modal="openModal"></selectedownteam>
 
         <opponents
             v-show="display == 'LFG'"
@@ -33,14 +32,14 @@
             :opponent-team-ids-with-offers-from-selected-own-team="opponentTeamIdsWithOffersFromSelectedOwnTeam"
             @refresh="refresh"
             @opponents-refreshed="setOpponentsRefreshed"
-            @open-modal-roster="openModalRosterForTeamId"></opponents>
+            @open-modal="openModal"></opponents>
     </div>
 
-    <roster :modal-settings="modalSettings"></roster>
+    <roster :team="modalRosterTeam" @close-modal="closeModal"></roster>
 
-    <settings :modal-settings="modalSettings"></settings>
+    <settings :is-open="modalSettingsShow" @close-modal="closeModal"></settings>
 
-    <teamsettings :modal-settings="modalSettings"></teamsettings>
+    <teamsettings :team="modalTeamSettingsTeam" @close-modal="closeModal"></teamsettings>
 </div>
 
 <%- include('../partials/footer'); %>

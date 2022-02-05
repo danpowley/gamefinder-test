@@ -50,7 +50,7 @@ import { Util } from '../../core/util';
                                 </template>
                                 <a href="#">Hide</a>
                             </template>
-                            <a href="#" @click.prevent="openModalRosterForTeamId(oppTeam.id)">Roster</a>
+                            <a href="#" @click.prevent="openModal('ROSTER', {team: oppTeam})">Roster</a>
                         </div>
                     </div>
                 </div>
@@ -311,8 +311,8 @@ export default class OpponentsComponent extends Vue {
         this.uiUpdatesPaused = isPaused;
     }
 
-    public openModalRosterForTeamId(teamId: number) {
-        this.$emit('open-modal-roster', teamId);
+    public openModal(name: string, modalSettings: any) {
+        this.$emit('open-modal', name, modalSettings);
     }
 
     private abbreviate(stringValue: string, maxCharacters: number) {
