@@ -55,7 +55,7 @@ export default class LfgTeamsComponent extends Vue {
         teams.sort(GameFinderPolicies.sortTeamByDivisionNameLeagueNameTeamName);
         this.teams = teams;
 
-        this.checked = teams.filter((team) => team.isLfg == 'Yes').map((team) => team.id);
+        this.checked = teams.filter(GameFinderPolicies.teamIsLfg).map((team) => team.id);
 
         this.updateAllChecked();
     }
@@ -63,14 +63,14 @@ export default class LfgTeamsComponent extends Vue {
     private async getTeamsCanLfg() {
         const result = await Axios.post('/api/coach/teams/' + this.$props.coachName);
         let allTeams = result.data.teams;
-        const teams = allTeams.filter((team) => team.canLfg == 'Yes' && team.status == 'Active');
+        const teams = allTeams.filter(GameFinderPolicies.teamCanLfg);
         return teams;
     }
 
     private async updateBlackboxData() {
         const teams = await this.getTeamsCanLfg();
-        const availableTeams = teams.filter((team) => team.division === 'Competitive');
-        const chosenTeams = availableTeams.filter((team) => team.isLfg === 'Yes');
+        const availableTeams = teams.filter(GameFinderPolicies.teamIsCompetitiveDivision);
+        const chosenTeams = availableTeams.filter(GameFinderPolicies.teamIsLfg);
 
         this.$emit('blackbox-data', {
             available: availableTeams.length,
