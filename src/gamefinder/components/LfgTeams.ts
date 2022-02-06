@@ -45,10 +45,6 @@ export default class LfgTeamsComponent extends Vue {
         await this.reloadTeams();
     }
 
-    public abbreviate(stringValue: string, maxCharacters: number) {
-        return Util.abbreviate(stringValue, maxCharacters);
-    }
-
     public async showLfg() {
         await this.updateBlackboxData();
         this.$emit('show-lfg');
@@ -137,5 +133,9 @@ export default class LfgTeamsComponent extends Vue {
             allCheckbox.checked = false;
             allCheckbox.indeterminate = true;
         }
+    }
+
+    public abbreviate(stringValue: string, maxCharacters: number) {
+        return Util.abbreviate(stringValue, maxCharacters);
     }
 }

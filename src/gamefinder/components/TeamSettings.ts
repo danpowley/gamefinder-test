@@ -31,11 +31,11 @@ import { Util } from '../../core/util';
     }
 })
 export default class TeamSettingsComponent extends Vue {
-    private abbreviate(stringValue: string, maxCharacters: number) {
-        return Util.abbreviate(stringValue, maxCharacters);
+    public close() {
+        this.$emit('close-modal');
     }
 
-    private close() {
-        this.$emit('close-modal');
+    public abbreviate(stringValue: string, maxCharacters: number) {
+        return Util.abbreviate(stringValue, maxCharacters);
     }
 }

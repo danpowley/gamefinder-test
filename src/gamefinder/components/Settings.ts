@@ -26,7 +26,7 @@ import Component from 'vue-class-component';
     }
 })
 export default class SettingsComponent extends Vue {
-    private close() {
+    public close() {
         this.$emit('close-modal');
     }
 }

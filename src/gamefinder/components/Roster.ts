@@ -32,10 +32,10 @@ import { Util } from '../../core/util';
     }
 })
 export default class RosterComponent extends Vue {
-    private rosterData = null;
+    public rosterData = null;
     private rosterCache:any = {};
 
-    private async loadRosterData() {
+    public async loadRosterData() {
         if (this.$props.team === null) {
             this.rosterData = null;
             return;
@@ -45,7 +45,7 @@ export default class RosterComponent extends Vue {
         this.rosterData = rosterData;
     }
 
-    private close() {
+    public close() {
         this.$emit('close-modal');
     }
 
@@ -83,7 +83,7 @@ export default class RosterComponent extends Vue {
         return data.roster;
     }
 
-    private abbreviate(stringValue: string, maxCharacters: number) {
+    public abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
     }
 }
