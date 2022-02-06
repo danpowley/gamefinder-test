@@ -80,15 +80,15 @@ export default class GameFinderPolicies {
         return d;
     }
 
-    public static teamCanLfg(team) {
+    public static teamCanLfg(team: any): boolean {
         return team.canLfg === 'Yes' && team.status === 'Active';
     }
 
-    public static teamIsLfg(team) {
+    public static teamIsLfg(team: any): boolean {
         return team.isLfg === 'Yes';
     }
 
-    public static teamIsCompetitiveDivision(team) {
+    public static teamIsCompetitiveDivision(team: any): boolean {
         return team.division === 'Competitive';
     }
 }
