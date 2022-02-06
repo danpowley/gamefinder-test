@@ -14,6 +14,17 @@ import OffersComponent from "./components/Offers";
 import OpponentsComponent from "./components/Opponents";
 
 @Component({
+    components: {
+        'lfgteams': LfgTeamsComponent,
+        'blackbox': BlackboxComponent,
+        'settings': SettingsComponent,
+        'teamsettings': TeamSettingsComponent,
+        'roster': RosterComponent,
+        'teamcards': TeamCardsComponent,
+        'selectedownteam': SelectedOwnTeamComponent,
+        'offers': OffersComponent,
+        'opponents': OpponentsComponent
+    },
     template: `
         <div class="gamefinder">
 
@@ -64,7 +75,7 @@ import OpponentsComponent from "./components/Opponents";
         </div>
     `
 })
-export default class App extends Vue {
+export default class GameFinder extends Vue {
     public coachName: string | null = null;
     public display: 'LFG' | 'TEAMS' | 'NONE' = 'LFG';
     public featureFlags = {blackbox: true};
@@ -323,18 +334,3 @@ export default class App extends Vue {
         this.opponentsRefreshRequired = false;
     }
 }
-
-const app = new App({
-    el: '#vuecontent',
-    components: {
-        'lfgteams': LfgTeamsComponent,
-        'blackbox': BlackboxComponent,
-        'settings': SettingsComponent,
-        'teamsettings': TeamSettingsComponent,
-        'roster': RosterComponent,
-        'teamcards': TeamCardsComponent,
-        'selectedownteam': SelectedOwnTeamComponent,
-        'offers': OffersComponent,
-        'opponents': OpponentsComponent
-    }
-});
