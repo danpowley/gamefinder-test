@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
+import GameFinderHelpers from '../GameFinderHelpers';
 
 @Component({
     template: `
@@ -8,8 +9,7 @@ import Component from 'vue-class-component';
             <div v-for="myTeam in myTeams" :key="myTeam.id" @click="select(myTeam)"
                 class="teamcard" :class="{active: myTeam.selected}"
                 :title="myTeam.name + '\\n' + myTeam.race + '\\n' + myTeam.division + (myTeam.league.name !== undefined ? ' (' + myTeam.league.name + ')' : '')">
-                <!-- @christer Absolute url use for icon. Fragile technique for accessing logo. -->
-                <div class="cardlogo"><img :src="'https://fumbbl.com/i/' + myTeam.raceLogos[0].logo"></div>
+                <div class="cardlogo"><img :src="getTeamLogoUrl(myTeam)"></div>
                 <div class="cardinfo">
                     <div class="teaminfo">
                         <div class="divisionletter">[{{ myTeam.division.charAt(0) }}{{ myTeam.league.name ? '*' : '' }}]</div>{{
@@ -36,5 +36,9 @@ import Component from 'vue-class-component';
 export default class TeamCardsComponent extends Vue {
     public select(team) {
         this.$emit('select', team);
+    }
+
+    public getTeamLogoUrl(team: any): string {
+        return GameFinderHelpers.getTeamLogoUrl(team);
     }
 }

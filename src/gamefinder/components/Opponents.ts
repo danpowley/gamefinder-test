@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Component from 'vue-class-component';
 import Axios from 'axios';
 import { Util } from '../../core/util';
+import GameFinderHelpers from '../GameFinderHelpers';
 
 @Component({
     template: `
@@ -31,8 +32,7 @@ import { Util } from '../../core/util';
                 <div v-show="isExpanded(opponent)">
                     <div v-for="oppTeam in opponent.teams" v-if="oppTeam.visible" :key="oppTeam.id" class="team">
                         <div class="logo">
-                            <!-- @christer absolute url and fragile logo access. -->
-                            <img :src="'https://fumbbl.com/i/' + oppTeam.raceLogos[0].logo" />
+                            <img :src="getTeamLogoUrl(oppTeam)" />
                         </div>
                         <div class="details">
                             <div class="name">{{ abbreviate(oppTeam.name, 55) }}</div>
@@ -318,5 +318,9 @@ export default class OpponentsComponent extends Vue {
 
     public abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
+    }
+
+    public getTeamLogoUrl(team: any): string {
+        return GameFinderHelpers.getTeamLogoUrl(team);
     }
 }

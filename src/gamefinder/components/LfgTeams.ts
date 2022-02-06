@@ -3,6 +3,7 @@ import Component from 'vue-class-component';
 import { Util } from '../../core/util';
 import Axios from 'axios';
 import GameFinderPolicies from '../GameFinderPolicies';
+import GameFinderHelpers from '../GameFinderHelpers';
 
 @Component({
     template: `
@@ -12,8 +13,7 @@ import GameFinderPolicies from '../GameFinderPolicies';
                 <div class="lfgList">
                     <div v-for="team in teams" :key="team.id" class="lfgteam">
                         <input class="teamcheck" type="checkbox" :value="team.id" v-model="checked" @change="toggleTeam">
-                        <!-- @christer Absolute url use for icon. Fragile technique for accessing logo. -->
-                        <img :src="'https://fumbbl.com/i/' + team.raceLogos[0].logo" />
+                        <img :src="getTeamLogoUrl(team)" />
                         <div>
                             <div class="teamname">{{ abbreviate(team.name, 70) }}</div>
                             <div class="teaminfo"><span title="Seasons and games played">S{{ team.currentSeason }}:G{{ team.gamesPlayedInSeason }}</span> TV{{ team.teamValue/1000 }}k {{ team.race }}</div>
@@ -137,5 +137,9 @@ export default class LfgTeamsComponent extends Vue {
 
     public abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
+    }
+
+    public getTeamLogoUrl(team: any): string {
+        return GameFinderHelpers.getTeamLogoUrl(team);
     }
 }

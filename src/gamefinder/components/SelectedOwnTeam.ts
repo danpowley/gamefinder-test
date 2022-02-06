@@ -1,14 +1,14 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Util } from '../../core/util';
+import GameFinderHelpers from '../GameFinderHelpers';
 
 @Component({
     template: `
         <div id="selectedownteam">
             <template v-if="team">
                 <div class="logo">
-                    <!-- @christer Absolute url use for icon. Fragile technique for accessing logo. -->
-                    <img :src="'https://fumbbl.com/i/' + team.raceLogos[0].logo" />
+                    <img :src="getTeamLogoUrl(team)" />
                 </div>
                 <div class="teamdetails">
                     <div class="teamname"><a href="#" @click.prevent="openModal('ROSTER', {team: team})">{{ abbreviate(team.name, 65) }}</a></div>
@@ -48,5 +48,9 @@ export default class SelectedOwnTeamComponent extends Vue {
 
     public abbreviate(stringValue: string, maxCharacters: number) {
         return Util.abbreviate(stringValue, maxCharacters);
+    }
+
+    public getTeamLogoUrl(team: any): string {
+        return GameFinderHelpers.getTeamLogoUrl(team);
     }
 }

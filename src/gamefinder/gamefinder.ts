@@ -317,15 +317,6 @@ export default class GameFinder extends Vue {
         this.modalSettingsShow = false;
     }
 
-    // public teamLogo(team: any): number | false {
-    //     for (let l of team.raceLogos) {
-    //         if (l.size === 32) {
-    //             return l.logo;
-    //         }
-    //     }
-    //     return false;
-    // }
-
     public setOpponentsRefreshRequired() {
         this.opponentsRefreshRequired = true;
     }
