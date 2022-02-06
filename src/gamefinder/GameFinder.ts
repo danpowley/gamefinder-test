@@ -61,8 +61,11 @@ import OpponentsComponent from "./components/Opponents";
                     :opponent-map="opponentMap"
                     :opponents-refresh-required="opponentsRefreshRequired"
                     :selected-own-team="selectedOwnTeam"
-                    :opponent-team-ids-with-offers-from-selected-own-team="opponentTeamIdsWithOffersFromSelectedOwnTeam"
+                    :selected-own-team-offered-team-ids="selectedOwnTeamOfferedTeamIds"
+                    :selected-own-team-hidden-team-ids="selectedOwnTeamHiddenTeamIds"
                     @refresh="refresh"
+                    @hide-match="hideMatch"
+                    @unhide-match="unhideMatch"
                     @opponents-refreshed="setOpponentsRefreshed"
                     @open-modal="openModal"></opponents>
             </div>
@@ -81,12 +84,13 @@ export default class GameFinder extends Vue {
     public featureFlags = {blackbox: true};
 
     public selectedOwnTeam:any = null;
-    public opponentTeamIdsWithOffersFromSelectedOwnTeam: number[] = [];
     public me:any = { teams: [] };
 
-    public opponentMap:Map<string,any> = new Map<string,any>();
+    public opponentMap: Map<string, any> = new Map<string, any>();
     public opponentsRefreshRequired: boolean = false;
-    private readHistory:Map<number,number[]> = new Map<number,number[]>();
+    private readHistory: Map<number, number[]> = new Map<number, number[]>();
+
+    private hiddenOpponents: {myTeamId: number, opponentTeamId: number}[] = [];
 
     // the offers property is primarily managed by the OffersComponent, they're held here and passed to OffersComponent as a prop
     public offers:any = [];
@@ -156,7 +160,6 @@ export default class GameFinder extends Vue {
         this.refreshOwnTeamsAllowedSettings();
         this.refreshOwnTeamsUnreadSettings();
         this.refreshOpponentVisibility();
-        this.refreshOpponentTeamIdsWithOffersFromSelectedOwnTeam();
     }
 
     private refreshOwnTeamSelectionSettings() {
@@ -235,18 +238,40 @@ export default class GameFinder extends Vue {
         });
     }
 
-    private refreshOpponentTeamIdsWithOffersFromSelectedOwnTeam() {
-        this.opponentTeamIdsWithOffersFromSelectedOwnTeam = [];
+    // Used by Opponents component to show which teams you've sent offers to.
+    get selectedOwnTeamOfferedTeamIds(): number[] {
+        const selectedOwnTeamOfferedTeamIds = [];
 
         if (! this.selectedOwnTeam) {
-            return;
+            return selectedOwnTeamOfferedTeamIds;
         }
 
         for (const offer of this.offers) {
             if (offer.external === false && offer.home.id === this.selectedOwnTeam.id) {
-                this.opponentTeamIdsWithOffersFromSelectedOwnTeam.push(offer.away.id);
+                selectedOwnTeamOfferedTeamIds.push(offer.away.id);
             }
         }
+
+        return selectedOwnTeamOfferedTeamIds;
+    }
+
+    // Used by Opponents component to show hidden teams.
+    get selectedOwnTeamHiddenTeamIds(): number[] {
+        const selectedOwnTeamHiddenTeamIds = [];
+
+        if (! this.selectedOwnTeam) {
+            return selectedOwnTeamHiddenTeamIds;
+        }
+
+        for (const teamIds of this.hiddenOpponents) {
+            if (teamIds.myTeamId === this.selectedOwnTeam.id) {
+                if (! selectedOwnTeamHiddenTeamIds.includes(teamIds.opponentTeamId)) {
+                    selectedOwnTeamHiddenTeamIds.push(teamIds.opponentTeamId);
+                }
+            }
+        }
+
+        return selectedOwnTeamHiddenTeamIds;
     }
 
     private updateReadHistoryForSelectedOwnTeam() {
@@ -286,6 +311,24 @@ export default class GameFinder extends Vue {
 
     public handleBlackboxData(blackboxData: {available: number, chosen: number}) {
         this.blackboxData = blackboxData;
+    }
+
+    public hideMatch(opponentTeamId: number): void {
+        if (! this.selectedOwnTeam) {
+            return;
+        }
+
+        this.hiddenOpponents.push({myTeamId: this.selectedOwnTeam.id, opponentTeamId: opponentTeamId});
+    }
+
+    public unhideMatch(opponentTeamId: number): void {
+        if (! this.selectedOwnTeam) {
+            return;
+        }
+
+        this.hiddenOpponents = this.hiddenOpponents.filter(function (teamIds) {
+            return ! (teamIds.myTeamId === this.selectedOwnTeam.id && teamIds.opponentTeamId === opponentTeamId);
+        }, this);
     }
 
     private onOuterModalClick(e) {
