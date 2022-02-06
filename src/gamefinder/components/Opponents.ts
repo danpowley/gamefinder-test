@@ -38,6 +38,7 @@ import GameFinderHelpers from '../GameFinderHelpers';
                             <div class="name">{{ abbreviate(oppTeam.name, 55) }}</div>
                             <div class="info">
                                 <span v-show="hasOfferFromSelectedOwnTeam(oppTeam)" class="offeredtag">Offered</span>
+                                <!-- @christer, I've made up some values here oppTeam.currentSeason and oppTeam.gamesPlayedInSeason -->
                                 <span title="Seasons and games played">S{{ oppTeam.currentSeason }}:G{{ oppTeam.gamesPlayedInSeason }}</span> TV {{ oppTeam.teamValue / 1000 }}k {{ oppTeam.race }}
                             </div>
                         </div>
