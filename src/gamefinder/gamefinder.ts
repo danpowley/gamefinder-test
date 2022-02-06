@@ -2,388 +2,194 @@ import Vue from "vue"
 import Component from "vue-class-component"
 import { Util } from "../core/util"
 import Axios from "axios"
+import GameFinderPolicies from "./GameFinderPolicies";
+import LfgTeamsComponent from "./components/LfgTeams";
+import BlackboxComponent from "./components/Blackbox";
+import SettingsComponent from "./components/Settings";
+import TeamSettingsComponent from "./components/TeamSettings";
+import RosterComponent from "./components/Roster";
+import TeamCardsComponent from "./components/TeamCards";
+import SelectedOwnTeamComponent from "./components/SelectedOwnTeam";
+import OffersComponent from "./components/Offers";
+import OpponentsComponent from "./components/Opponents";
 
-@Component
-export default class App extends Vue {
-    coachName:string|null = null;
+@Component({
+    components: {
+        'lfgteams': LfgTeamsComponent,
+        'blackbox': BlackboxComponent,
+        'settings': SettingsComponent,
+        'teamsettings': TeamSettingsComponent,
+        'roster': RosterComponent,
+        'teamcards': TeamCardsComponent,
+        'selectedownteam': SelectedOwnTeamComponent,
+        'offers': OffersComponent,
+        'opponents': OpponentsComponent
+    },
+    template: `
+        <div class="gamefinder">
 
-    public hoverBlock: 'OFFERS' | 'OPPONENTS' | null = null;
+            <div class="leftcolumn">
+                <blackbox
+                    v-if="featureFlags.blackbox"
+                    :display-is-active="display === 'LFG'"
+                    :available="blackboxData.available"
+                    :chosen="blackboxData.chosen"></blackbox>
+
+                <offers :offers="offers" :coach-name="coachName"></offers>
+            </div>
+
+            <div class="rightcolumn">
+                <div id="overallstatus">
+                    {{ coachName }}: You have {{ me.teams.length }} team{{ me.teams.length === 1 ? '' : 's' }} looking for a game.
+                    <div class="overalllinks"><a href="#" @click.prevent="showTeams">Choose teams</a> <a href="#" @click.prevent="openModal('SETTINGS', {})">Settings</a></div>
+                </div>
+
+                <teamcards v-show="display === 'LFG'" :my-teams="me.teams" @select="selectTeam"></teamcards>
+
+                <!-- We use v-if here because we want the component to be mounted each time display changes and force a reload of team data -->
+                <lfgteams v-if="display === 'TEAMS'" :coach-name="coachName" @show-lfg="showLfg" @blackbox-data="handleBlackboxData"></lfgteams>
+
+                <selectedownteam
+                    v-show="display === 'LFG'"
+                    :team="selectedOwnTeam"
+                    @deselect-team="deselectTeam"
+                    @open-modal="openModal"></selectedownteam>
+
+                <opponents
+                    v-show="display == 'LFG'"
+                    :coach-name="coachName"
+                    :opponent-map="opponentMap"
+                    :opponents-refresh-required="opponentsRefreshRequired"
+                    :selected-own-team="selectedOwnTeam"
+                    :opponent-team-ids-with-offers-from-selected-own-team="opponentTeamIdsWithOffersFromSelectedOwnTeam"
+                    @refresh="refresh"
+                    @opponents-refreshed="setOpponentsRefreshed"
+                    @open-modal="openModal"></opponents>
+            </div>
+
+            <roster :team="modalRosterTeam" @close-modal="closeModal"></roster>
+
+            <settings :is-open="modalSettingsShow" @close-modal="closeModal"></settings>
+
+            <teamsettings :team="modalTeamSettingsTeam" @close-modal="closeModal"></teamsettings>
+        </div>
+    `
+})
+export default class GameFinder extends Vue {
+    public coachName: string | null = null;
+    public display: 'LFG' | 'TEAMS' | 'NONE' = 'LFG';
     public featureFlags = {blackbox: true};
 
-    public selectedOwnTeam:any = false;
-    public selectedOpponentTeam:any = false;
+    public selectedOwnTeam:any = null;
+    public opponentTeamIdsWithOffersFromSelectedOwnTeam: number[] = [];
     public me:any = { teams: [] };
 
-    private opponentsNeedUpdate: boolean;
-    public pendingOpponents: any = [];
     public opponentMap:Map<string,any> = new Map<string,any>();
-    public opponents:any = {};
-    public expandedForAllOpponents: number[] = [];
+    public opponentsRefreshRequired: boolean = false;
     private readHistory:Map<number,number[]> = new Map<number,number[]>();
 
-    public pendingOffers:any = [];
+    // the offers property is primarily managed by the OffersComponent, they're held here and passed to OffersComponent as a prop
     public offers:any = [];
 
-    public additionalOffers: number = 0;
+    public blackboxData: {available: number, chosen: number} = {available: 0, chosen: 0};
 
-    public display: string = 'lfg';
-    public modalDisplayed: 'ROSTER' | 'SETTINGS' | 'TEAM_SETTINGS' | null = null;
-    public lfgTeams: any[] = [];
-    public checked: boolean[] = [];
-    public rosterdata = null;
-    public rosterCache:any = {};
+    public modalRosterTeam: any | null = null;
+    public modalTeamSettingsTeam: any | null = null;
+    public modalSettingsShow: boolean = false;
 
-    public get showOfferButton() {
-        return this.selectedOwnTeam && this.selectedOpponentTeam;
-    }
-
-    private async getOpponents() {
-        const result = await Axios.post('/api/gamefinder/teams')
-
-        const data = result.data;
-
-        Util.applyDeepDefaults(data, [{
-            visibleTeams: 0,
-            expanded: false,
-            showAll: false,
-            url: (opp: any) => '/~' + encodeURIComponent(opp.name),
-            teams: [{
-                visible: false,
-                selected: false,
-                isOwn: false,
-                showDivisionHeader: false,
-                showLeagueHeader: false
-            }]
-        }], this.$set);
-
-        for(let i = data.length - 1; i >= 0; i--) {
-            if (data[i].name === this.coachName) {
-                data.splice(i, 1);
-            }
-        }
-
-        this.pendingOpponents = data;
-        this.opponentsNeedUpdate = true;
-        this.tick();
-    }
-
-    private async getOffers() {
-        const pre = Date.now();
-        const offers: any = await Axios.post('/api/gamefinder/getoffers', {cheatingCoachName: this.coachName});
-        const now = Date.now();
-
-        const avgTime = now / 2 + pre / 2;
-
-        for (const offer of offers.data) {
-            offer.expiry = avgTime + offer.timeRemaining;
-            offer.external = offer.team1.coach.name !== this.coachName
-            // Swap teams if the first team is the opponent's
-            if (offer.team2.coach.name === this.coachName) {
-                const x = offer.team1;
-                offer.team1 = offer.team2;
-                offer.team2 = x;
-            }
-            this.createOffer(offer);
-        }
+    async beforeMount() {
+        this.coachName = this.$el.attributes['coach'].value;
+        // @christer remove this, just ensuring our user exists in our data store
+        await Axios.post('/api/gamefinder/addcheatingcoach', {cheatingCoachName: this.coachName});
     }
 
     async mounted() {
-        this.coachName = document.getElementsByClassName('gamefinder')[0].getAttribute('coach');
-
         await this.activate();
-        await this.getOpponents();
-        await this.reloadTeams();
 
-        this.updateAllowed();
-        this.refreshSelection();
-
-        setInterval(this.tick, 100);
-        setInterval(this.getOpponents, 5000);
-        setInterval(this.getOffers, 1000);
+        this.refresh();
 
         document.addEventListener('click', this.onOuterModalClick)
     }
 
     public async activate() {
+        // @christer cheatingCoachName can be removed from post body
         await Axios.post('/api/gamefinder/activate', {cheatingCoachName: this.coachName})
+        // @christer cheatingCoachName can be removed from post body
         const result = await Axios.post('/api/gamefinder/coachteams', {cheatingCoachName: this.coachName});
         const activeTeams = result.data.teams;
 
         Util.applyDeepDefaults(activeTeams, [{
             selected: false,
-            isOwn: true,
-            showDivisionHeader: false,
-            showLeagueHeader: false,
             allow: [],
-            hasUnreadItems: false,
-            seen: [],
+            hasUnreadItems: false
         }], this.$set);
 
-        activeTeams.sort((a, b) => {
-            let d = a.division > b.division ? -1 : (a.division === b.division ? 0 : 1);
-
-            if (d === 0 && a.division === 'League') {
-                d = a.league > b.league ? 1 : (a.league === b.league ? 0 : -1);
-            }
-
-            if (d === 0) {
-                d = a.name > b.name ? 1 : (a.name === b.name ? 0 : -1);
-            }
-
-            return d;
-        });
-        this.me.teams = activeTeams;        
+        activeTeams.sort(GameFinderPolicies.sortTeamByDivisionNameLeagueNameTeamName);
+        this.me.teams = activeTeams;
     }
 
-    public tick() {
-        this.updateTimeRemaining();
-        this.processOffers();
-        this.processOpponents();
-    }
+    public async showLfg() {
+        this.display = 'NONE';
 
-    private updateTimeRemaining() {
-        const now = Date.now();
-        for (const o of this.offers) {
-            o.timeRemaining = o.expiry - now;
-        }
-    }
+        await this.activate();
 
-    private processOffers() {
-        const now = Date.now();
-
-        // Process match offers
-        for (let i = this.offers.length - 1; i>=0; i--) {
-            if (this.offers[i].expiry < now) {
-                this.offers.splice(i, 1);
-            }
+        // always select if only 1 team
+        if (this.me.teams.length === 1) {
+            const onlyTeam = this.me.teams[0];
+            this.selectedOwnTeam = onlyTeam;
+            onlyTeam.selected = true;
         }
 
-        if (this.hoverBlock !== 'OFFERS') {
-            while(this.pendingOffers.length > 0) {
-                const newOffer = this.pendingOffers.pop();
+        this.refresh();
 
-                let processed = false;
-                for (const o of this.offers) {
-                    if (newOffer.id == o.id) {
-                        processed = true;
-                        // Update expiry time just to be sure.
-                        o.timeRemaining = newOffer.expiry - now;
-                        o.expiry = newOffer.expiry;
-                    }
-                }
+        this.setOpponentsRefreshRequired();
 
-                if (!processed) {
-                    this.offers.unshift(newOffer);
-                }
+        this.display = 'LFG';
+    }
+
+    public async showTeams() {
+        this.display = 'TEAMS';
+    }
+
+    private refresh() {
+        this.refreshOwnTeamSelectionSettings();
+        this.refreshOwnTeamsAllowedSettings();
+        this.refreshOwnTeamsUnreadSettings();
+        this.refreshOpponentVisibility();
+        this.refreshOpponentTeamIdsWithOffersFromSelectedOwnTeam();
+    }
+
+    private refreshOwnTeamSelectionSettings() {
+        let ownTeamSelected = false;
+
+        // Update own team selection
+        for (let myTeam of this.me.teams) {
+            myTeam.selected = this.selectedOwnTeam && (myTeam.id == this.selectedOwnTeam.id);
+            if (myTeam.selected) {
+                ownTeamSelected = true;
             }
-            this.additionalOffers = 0;
-        } else {
-            let num = 0;
-            for (const pending of this.pendingOffers) {
-                let found = false;
-                for (const o of this.offers) {
-                    if (pending.id == o.id) {
-                        found = true;
-                    }
-                }
-                if (!found) {
-                    num++;
-                }
-            }
-            this.additionalOffers = num;
+        }
+
+        // No visible own team selected, so we make sure the state reflects that
+        if (! ownTeamSelected) {
+            this.selectedOwnTeam = null;
         }
     }
 
-    public setHoverBlock(uiToBlock: 'OFFERS' | 'OPPONENTS' | null) {
-        this.hoverBlock = uiToBlock;
-    }
-
-    private processOpponents() {
-        // Process updated opponent list
-        if (this.opponentsNeedUpdate) {
-            this.opponentsNeedUpdate = false;
-            if (this.hoverBlock !== 'OPPONENTS') {
-                // Mark all current opponents as dirty
-                this.opponentMap.forEach((o, k) => {
-                    this.opponentMap.get(k).dirty = true;
-                });
-
-                let r = {};
-                for (let p of this.pendingOpponents) {
-                    r[p.name] = p;
-                }
-
-                for (let k in r) {
-                    if (!this.opponentMap.has(k)) {
-                        // New coach
-                        r[k].dirty = false;
-                        this.opponentMap.set(k, r[k]);
-                    } else {
-                        // Coach is already on the list, so make sure it's kept there.
-                        let opp = this.opponentMap.get(k)
-                        opp.dirty = false;
-
-                        // Update teams
-
-                        // Generate map and mark as dirty
-                        let teamMap = {};
-                        for (let t in opp.teams) {
-                            let team = opp.teams[t];
-                            team.dirty = true;
-                            teamMap[team.id] = team;
-                        }
-
-                        r[k].teams.forEach(t => {
-                            if (teamMap[t.id] == undefined) {
-                                // new team, add it
-                                teamMap[t.id] = t;
-                                t.dirty = false;
-                            } else {
-                                // Existing team, mark it as clean
-                                teamMap[t.id].dirty = false;
-                            }
-                        });
-
-                        // Remove teams that are no longer on the list
-                        for (let i=opp.teams.length - 1; i>=0; i--) {
-                            if (opp.teams[i].dirty) {
-                                delete teamMap[opp.teams[i].id];
-                                opp.teams.splice(i, 1);
-                            } else {
-                                // Need to update the stats.. Might have changed
-                                let existingTeam = opp.teams[i];
-                                existingTeam.teamValue = teamMap[existingTeam.id].teamValue;
-                                existingTeam.gamesPlayed = teamMap[existingTeam.id].gamesPlayed;
-
-                                // Remove team from pending list
-                                delete teamMap[existingTeam.id];
-                            }
-                        }
-
-                        // Add new teams.
-                        for (let k in teamMap) {
-                            opp.teams.push(teamMap[k]);
-                        }
-                    }
-                }
-
-                // Remove opponent coaches that aren't present anymore
-                this.opponentMap.forEach((o, key) => {
-                    if (o.dirty) {
-                        this.opponentMap.delete(key);
-                    }
-                });
-
-                // Store collapsed state of coaches
-                const collapsed: Array<string> = [];
-                for (let o of this.opponents) {
-                    if (! o.expanded) {
-                        collapsed.push(o.name);
-                    }
-                }
-
-                // Generate new opponents structure
-                let newOpponents = [];
-                this.opponentMap.forEach(o => {
-                    newOpponents.push(o);
-                    // Expand unless the coach was explicitly collapsed (allow new coaches to be expanded by default)
-                    o.expanded = collapsed.indexOf(o.name) === -1;
-                });
-
-                this.opponents = newOpponents;
-                this.pendingOpponents = [];
-                this.sortOpponents();
-                this.refreshSelection();
-                this.updateAllowed();
-            }
-        }        
-    }
-
-    private sortOpponents() {
-        this.opponents.sort((a,b) => a.name.localeCompare(b.name));
-    }
-
-    private isMatchAllowed(team1, team2): boolean {
-        if (!team1 || !team2) {
-            return false;
-        }
-
-        if (team1.coach == team2.coach) {
-            return false;
-        }
-
-        if (team1.division != team2.division) {
-            return false;
-        }
-
-        if (team1.status != "Active" || team2.status != "Active") {
-            return false;
-        }
-
-        if (!team1.canLfg || !team2.canLfg) {
-            return false;
-        }
-
-        if (team1.league.valid && team2.league.valid) {
-            if (team1.league.ruleset.id != team2.league.ruleset.id) {
-                return false;
-            }
-
-            if (team1.league.id != team2.league.id) {
-                if (!team1.league.ruleset.options['rulesetOptions.crossLeagueMatches'] || !team2.league.ruleset.options['rulesetOptions.crossLeagueMatches']) {
-
-                    return false;
-                }
-            }
-        }
-
-        if (team1.percentageLimit || team2.percentageLimit) {
-            let tvDiff = Math.abs(team1.teamValue - team2.teamValue);
-            let limit1 = this.getTvLimit(team1);
-            let limit2 = this.getTvLimit(team2);
-
-            if (limit1 != 0 && tvDiff > limit1) {
-                return false;
-            }
-            if (limit2 != 0 && tvDiff > limit2) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private getTvLimit(team) {
-        let rating = Math.floor(team.teamValue / 10000);
-        if (team.gamesPlayed < 3) {
-            return Math.round(rating * 0.1) * 10000;
-        }
-        if (team.gamesPlayed < 10) {
-            return Math.round(rating * 0.15) * 10000;
-        }
-        if (team.gamesPlayed < 30) {
-            let limit = Math.round(rating * (0.15 + (team.gamesPlayed - 10) / 100 * 2)) * 10000;
-            return limit;
-        }
-
-        return 0;        
-    }
-
-    public updateAllowed() {
+    private refreshOwnTeamsAllowedSettings() {
         for (let team of this.me.teams) {
             team.allow = [];
             this.opponentMap.forEach(opponent => {
                 for (let oppTeam of opponent.teams) {
-                    if (this.isMatchAllowed(team, oppTeam)) {
+                    if (GameFinderPolicies.isMatchAllowed(team, oppTeam)) {
                         team.allow.push(oppTeam.id);
                     }
                 }
             });
         }
-        this.updateUnread();
     }
 
-    public updateUnread() {
+    private refreshOwnTeamsUnreadSettings() {
         for (const team of this.me.teams) {
             if (this.selectedOwnTeam && team.id === this.selectedOwnTeam.id) {
                 team.hasUnreadItems = false;
@@ -411,7 +217,7 @@ export default class App extends Vue {
         }
     }
 
-    public applyTeamFilters() {
+    private refreshOpponentVisibility() {
         this.opponentMap.forEach(opponent => {
             let numVisibleTeams = 0;
             for (let oppTeam of opponent.teams) {
@@ -427,95 +233,59 @@ export default class App extends Vue {
             }
             opponent.visibleTeams = numVisibleTeams;
         });
-        var previousDivision = false;
-        var previousLeagueId = false;
-        for (let myTeam of this.me.teams) {
-            myTeam.showDivisionHeader = false;
-            myTeam.showLeagueHeader = false;
-            if (previousDivision !== myTeam.division) {
-                previousDivision = myTeam.division;
-                myTeam.showDivisionHeader = true;
-            }
+    }
 
-            if (myTeam.division === 'League' && previousLeagueId !== myTeam.league.id) {
-                previousLeagueId = myTeam.league.id;
-                myTeam.showLeagueHeader = true;
+    private refreshOpponentTeamIdsWithOffersFromSelectedOwnTeam() {
+        this.opponentTeamIdsWithOffersFromSelectedOwnTeam = [];
+
+        if (! this.selectedOwnTeam) {
+            return;
+        }
+
+        for (const offer of this.offers) {
+            if (offer.external === false && offer.home.id === this.selectedOwnTeam.id) {
+                this.opponentTeamIdsWithOffersFromSelectedOwnTeam.push(offer.away.id);
             }
         }
     }
 
-    public isExpanded(opponent) {
-        if (this.selectedOwnTeam) {
-            return opponent.expanded;
-        } else {
-            return this.expandedForAllOpponents.includes(opponent.id);
-        }
-    }
-
-    public expandOpponent(opponent) {
-        if (this.selectedOwnTeam) {
-            // We have selected a team, so we can use the property directly on the opponent.
-            opponent.expanded = !opponent.expanded;
-        } else {
-            // No team selected, so we store the expanded state separately.
-            let index = this.expandedForAllOpponents.indexOf(opponent.id);
-            if (index !== -1) {
-                this.expandedForAllOpponents.splice(index, 1);
-            } else {
-                this.expandedForAllOpponents.push(opponent.id);
-            }
+    private updateReadHistoryForSelectedOwnTeam() {
+        if (! this.selectedOwnTeam) {
+            return;
         }
 
-        this.refreshSelection();
-    }
+        this.selectedOwnTeam.hasUnreadItems = false;
 
-    public expandAllOpponents() {
-        if (this.selectedOwnTeam) {
-            for (const visibleOpponent of this.visibleOpponents) {
-                visibleOpponent.expanded = true;
-            }
-        } else {
-             this.expandedForAllOpponents = Array.from(this.opponentMap.values()).map((o) => o.id);
+        if (! this.readHistory.has(this.selectedOwnTeam.id)) {
+            this.readHistory.set(this.selectedOwnTeam.id, []);
         }
-    }
 
-    public collapseAllOpponents() {
-        if (this.selectedOwnTeam) {
-            for (const visibleOpponent of this.visibleOpponents) {
-                visibleOpponent.expanded = false;
+        const teamReadHistory = this.readHistory.get(this.selectedOwnTeam.id);
+        for (const oppTeamId of this.selectedOwnTeam.allow) {
+            if (! teamReadHistory.includes(oppTeamId)) {
+                teamReadHistory.push(oppTeamId);
             }
-        } else {
-             this.expandedForAllOpponents = [];
         }
     }
 
     public selectTeam(team) {
-        for (let myTeam of this.me.teams) {
-            myTeam.selected = false;
-        }
-
-        team.hasUnreadItems = false;
-
-        if (team.id === this.selectedOwnTeam.id) {
-            this.selectedOwnTeam = null;
-            team.selected = false;
-
+        if (this.selectedOwnTeam && this.selectedOwnTeam.id === team.id) {
+            this.deselectTeam();
         } else {
             this.selectedOwnTeam = team;
-            team.selected = true;
-
-            // update the read history for the selected team
-            if (! this.readHistory.has(this.selectedOwnTeam.id)) {
-                this.readHistory.set(this.selectedOwnTeam.id, []);
-            }
-            const teamReadHistory = this.readHistory.get(this.selectedOwnTeam.id);
-            for (const oppTeamId of team.allow) {
-                if (! teamReadHistory.includes(oppTeamId))
-                teamReadHistory.push(oppTeamId);
-            }
+            this.updateReadHistoryForSelectedOwnTeam();
+            this.refresh();
         }
+    }
 
-        this.refreshSelection();
+    public deselectTeam() {
+        this.selectedOwnTeam = null;
+
+        this.refresh();
+    }
+
+    public handleBlackboxData(blackboxData: {available: number, chosen: number}) {
+        this.blackboxData = blackboxData;
     }
 
     private onOuterModalClick(e) {
@@ -525,319 +295,33 @@ export default class App extends Vue {
         ];
         for (const modal of modals) {
             if (clickTarget == modal) {
-                this.modalDisplayed = null;
+                this.closeModal();
             }
         }
     }
 
-    public async openModalRosterForTeamId(teamId) {
-        const rosterData = await this.getRoster(teamId);
-        this.rosterdata = rosterData;
-        this.modalDisplayed = 'ROSTER';
-    }
-
-    public async openModalRoster() {
-        this.openModalRosterForTeamId(this.selectedOwnTeam.id);
-    }
-
-    public closeModalRoster() {
-        this.rosterdata = null;
-        this.modalDisplayed = null;
-    }
-
-    public openModalSettings() {
-        this.modalDisplayed = 'SETTINGS';
-    }
-
-    public closeModalSettings() {
-        this.modalDisplayed = null;
-    }
-
-    public openModalTeamSettings() {
-        this.modalDisplayed = 'TEAM_SETTINGS';
-    }
-
-    public closeModalTeamSettings() {
-        this.modalDisplayed = null;
-    }
-
-    public abbreviate(stringValue: string, maxCharacters: number) {
-        if (stringValue.length <= maxCharacters) {
-            return stringValue;
-        }
-        return stringValue.substring(0, maxCharacters-1) + '…';
-    }
-
-    public teamLogo(team: any): number | false {
-        for (let l of team.raceLogos) {
-            if (l.size === 32) {
-                return l.logo;
-            }
-        }
-        return false;
-    }
-
-    public get availableBlackboxTeams(): number {
-        let available = 0;
-        for (const team of this.lfgTeams) {
-            if (team.division === 'Competitive') {
-                available++;
-            }
-        }
-
-        return available;
-    }
-
-    public get chosenBlackboxTeams(): number {
-        let chosen = 0;
-        for (const team of this.me.teams) {
-            if (team.division === 'Competitive') {
-                chosen++;
-            }
-        }
-
-        return chosen;
-    }
-
-    private refreshSelection() {
-        let ownTeamSelected = false;
-
-        // Update own team selection
-        for (let myTeam of this.me.teams) {
-            myTeam.selected = this.selectedOwnTeam && (myTeam.id == this.selectedOwnTeam.id);
-            if (myTeam.selected) {
-                ownTeamSelected = true;
-            }
-        }
-
-        // No visible own team selected, so we make sure the state reflects that
-        if (!ownTeamSelected) {
-            this.selectedOwnTeam = false;
-        }
-
-        this.applyTeamFilters();
-    }
-
-    private offerIsAlreadyPending(offerId: number): boolean {
-        for (const pendingOffer of this.pendingOffers) {
-            if (pendingOffer.id === offerId) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private createOffer(offerData) {
-        if (this.offerIsAlreadyPending(offerData.id)) {
-            return;
-        }
-
-        let offer = {
-            id: offerData.id,
-            expiry: offerData.expiry,
-            timeRemaining: offerData.timeRemaining,
-            lifetime: offerData.lifetime,
-            external: offerData.external,
-            home: {
-                id: offerData.team1.id,
-                team: offerData.team1.name,
-                race: offerData.team1.race.name,
-                tv: (offerData.team1.teamValue / 1000) + 'k',
-            },
-            away: {
-                id: offerData.team2.id,
-                team: offerData.team2.name,
-                race: offerData.team2.race.name,
-                tv: (offerData.team2.teamValue / 1000) + 'k'
-            }
-        };
-
-        this.pendingOffers.unshift(offer);
-    }
-
-    public sendOffer(team) {
-        let ownId = parseInt(this.selectedOwnTeam.id);
-        let oppId = parseInt(team.id);
-        Axios.post('/api/gamefinder/offer/' + ownId + '/' + oppId);
-    }
-
-    private findOfferForTeam(team) {
-        for (const offer of this.offers) {
-            if (offer.home.id == this.selectedOwnTeam.id && offer.away.id === team.id) {
-                return offer;
-            }
+    public openModal(modalName: string, modalSettings: any) {
+        this.closeModal();
+        if (modalName === 'ROSTER') {
+            this.modalRosterTeam = modalSettings.team;
+        } else if (modalName === 'TEAM_SETTINGS') {
+            this.modalTeamSettingsTeam = modalSettings.team;
+        } else if (modalName === 'SETTINGS') {
+            this.modalSettingsShow = true;
         }
     }
 
-    public offerExists(team): boolean {
-        return this.findOfferForTeam(team) ? true : false;
+    public closeModal() {
+        this.modalRosterTeam = null;
+        this.modalTeamSettingsTeam = null;
+        this.modalSettingsShow = false;
     }
 
-    public cancelOfferByTeam(team) {
-        const offer = this.findOfferForTeam(team)
-        this.cancelOffer(offer)
+    public setOpponentsRefreshRequired() {
+        this.opponentsRefreshRequired = true;
     }
 
-    public cancelOffer(offer) {
-        let index = this.offers.indexOf(offer);
-        if (index !== -1) {
-            this.offers.splice(index,1);
-        }
-    }
-
-    public async showLfg() {
-        this.display='none';
-
-        await this.activate();
-
-        // always select if only 1 team
-        if (this.me.teams.length === 1) {
-            const onlyTeam = this.me.teams[0];
-            this.selectedOwnTeam = onlyTeam;
-            onlyTeam.selected = true;
-        }
-
-        await this.getOpponents();
-
-        await this.updateAllowed();
-        this.refreshSelection();
-
-        this.display='lfg';
-    }
-
-    public async showTeams() {
-        this.display='none';
-        await this.reloadTeams();
-        this.updateAllChecked();
-        this.display='teams';
-    }
-
-    public async reloadTeams() {
-        const result = await Axios.post('/api/coach/teams/' + this.coachName);
-        let teams = result.data.teams;
-
-        this.lfgTeams = [];
-        this.checked = [];
-        for (let team of teams) {
-            if (team.canLfg == 'Yes' && team.status == 'Active') {
-                this.lfgTeams.push(team);
-                if (team.isLfg == 'Yes') {
-                    this.checked.push(team.id);
-                }
-            }
-        }
-    }
-
-    public get visibleOpponents(): any[] {
-        const visibleOpponents = [];
-        for (const opponent of this.opponents) {
-            if (opponent.visibleTeams > 0) {
-                visibleOpponents.push(opponent);
-            }
-        }
-        return visibleOpponents;
-    }
-
-    private updateAllChecked()
-    {
-        const allCheckbox:any = document.getElementById('all');
-        const checkboxes = document.getElementsByClassName('teamcheck');
-
-        let allChecked = true;
-        let allUnchecked = true;
-        for (let index=0; index<checkboxes.length; index++) {
-            const c:any = checkboxes[index];
-            if (c.checked) {
-                allUnchecked = false;
-            } else {
-                allChecked = false;
-            }
-        }
-
-        if (allUnchecked) {
-            allCheckbox.checked = false;
-            allCheckbox.indeterminate = false;
-        } else if (allChecked) {
-            allCheckbox.checked = true;
-            allCheckbox.indeterminate = false;
-        } else {
-            allCheckbox.checked = false;
-            allCheckbox.indeterminate = true;
-        }
-    }
-
-    public toggleTeam(event) {
-        const target = event.target;
-        const checked = target.checked;
-        const id = target.value;
-
-        if (checked) {
-            Axios.post('/api/gamefinder/addteam/' + id);
-        } else {
-            Axios.post('/api/gamefinder/removeteam/' + id);
-        }
-        this.updateAllChecked();
-    }
-
-    public toggleAll(event) {
-        const checked = event.target.checked;
-
-        if (checked) {
-            Axios.post('/api/gamefinder/addallteams', {cheatingCoachName: this.coachName});
-        } else {
-            Axios.post('/api/gamefinder/removeallteams', {cheatingCoachName: this.coachName});
-        }
-
-        const checkboxes = document.getElementsByClassName('teamcheck');
-
-        const arr = [];
-        for (let index=0; index<checkboxes.length; index++) {
-            const c:any = checkboxes[index];
-            c.checked = checked;
-            if (checked) {
-                arr.push(c.value);
-            }
-        }
-        this.checked = arr;
-    }
-
-    public async getRoster(teamId) {
-        let data = this.rosterCache[teamId];
-
-        if (this.rosterCache[teamId] != undefined) {
-            if (data.expiry < Date.now()) {
-                data = undefined;
-            }
-        }
-        if (data == undefined) {
-            const result = await Axios.post('/api/team/get/'+teamId);
-
-            for (const p of result.data.players) {
-                p.skills.sort((a,b) => a.localeCompare(b));
-                p.skills = p.skills.join(', ');
-            }
-
-            result.data.players.sort((a,b) => {
-                let r = a.position.localeCompare(b.position);
-                if (r == 0) {
-                    r = b.skills.length - a.skills.length;
-                }
-                return r;
-            });
-
-            data = {
-                expiry: Date.now() + 60000,
-                roster: result.data,
-            }
-            this.rosterCache[teamId] = data;
-        }
-
-        return data.roster;
+    public setOpponentsRefreshed() {
+        this.opponentsRefreshRequired = false;
     }
 }
-
-const app = new App({
-    el: '#vuecontent',
-    components: {
-    }
-});

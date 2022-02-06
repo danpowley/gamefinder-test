@@ -11,7 +11,7 @@ class RandomData {
     }
     var randomWords = require('random-words');
     const teamEndings = ['Utd', 'Reavers', 'Steeds', 'Mavericks', 'Falcons', 'Spurs', 'Hawks']
-    const teamWords = randomWords({min: 1, max: 15})
+    const teamWords = randomWords({min: 1, max: 3})
     teamWords.push(this.getArrayElement(teamEndings))
     const nameBody = teamWords.map((x) => x.charAt(0).toUpperCase() + x.slice(1)).join(' ')
     return `[${leaguePrefix}] ${nameBody}`

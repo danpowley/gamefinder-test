@@ -29,13 +29,6 @@ class Database {
       }
     )
 
-    this.teams.push(this.randomData.getTeam(coachName))
-    this.teams.push(this.randomData.getTeam(coachName))
-    this.teams.push(this.randomData.getTeam(coachName))
-    this.teams.push(this.randomData.getTeam(coachName))
-    this.teams.push(this.randomData.getTeam(coachName))
-    this.teams.push(this.randomData.getLeagueDivisionTeam(coachName))
-    this.teams.push(this.randomData.getLeagueDivisionTeam(coachName))
     const robotPirateLeague = {
       id: 1,
       name: 'Robot Pirate League',
@@ -48,10 +41,19 @@ class Database {
       valid: true,
       ruleset: {id: 1, options: {'rulesetOptions.crossLeagueMatches': false}},
     }
+
+    // order is deliberately random to show that the app is doing the ordering by division and league
     this.teams.push(this.randomData.getLeagueTeam(coachName, robotPirateLeague))
+    this.teams.push(this.randomData.getTeam(coachName))
+    this.teams.push(this.randomData.getTeam(coachName))
+    this.teams.push(this.randomData.getLeagueDivisionTeam(coachName))
+    this.teams.push(this.randomData.getTeam(coachName))
+    this.teams.push(this.randomData.getLeagueTeam(coachName, chaoticWizardLeague))
+    this.teams.push(this.randomData.getTeam(coachName))
+    this.teams.push(this.randomData.getLeagueDivisionTeam(coachName))
+    this.teams.push(this.randomData.getLeagueTeam(coachName, chaoticWizardLeague))
+    this.teams.push(this.randomData.getTeam(coachName))
     this.teams.push(this.randomData.getLeagueTeam(coachName, robotPirateLeague))
-    this.teams.push(this.randomData.getLeagueTeam(coachName, chaoticWizardLeague))
-    this.teams.push(this.randomData.getLeagueTeam(coachName, chaoticWizardLeague))
   }
 
   getTeamsForChooseTeams(coachName) {
