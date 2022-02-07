@@ -31,10 +31,10 @@ import GameFinderHelpers from '../GameFinderHelpers';
                 </div>
                 <div v-show="isExpanded(opponent)">
                     <div v-for="oppTeam in opponent.teams" v-if="oppTeam.visible" :key="oppTeam.id" class="team">
-                        <div class="logo" :class="{faded: isHiddenForSelectedOwnTeam(oppTeam)}">
+                        <div class="logo">
                             <img :src="getTeamLogoUrl(oppTeam)" />
                         </div>
-                        <div class="details" :class="{faded: isHiddenForSelectedOwnTeam(oppTeam)}">
+                        <div class="details">
                             <div class="name">{{ abbreviate(oppTeam.name, 55) }}</div>
                             <div class="info">
                                 <span v-show="isOfferedBySelectedOwnTeam(oppTeam)" class="offeredtag">Offered</span>
@@ -43,19 +43,14 @@ import GameFinderHelpers from '../GameFinderHelpers';
                             </div>
                         </div>
                         <div class="links">
-                            <template v-if="isHiddenForSelectedOwnTeam(oppTeam)">
-                                <a href="#" @click.prevent="unhideMatch(oppTeam.id)">Unhide</a>
-                            </template>
-                            <template v-else>
-                                <template v-if="isOwnTeamSelected">
-                                    <template v-if="isOfferedBySelectedOwnTeam(oppTeam)">
-                                        <span>Offered</span>
-                                    </template>
-                                    <template v-else>
-                                        <a href="#" @click.prevent="sendOffer(oppTeam)">Offer</a>
-                                    </template>
-                                    <a href="#" @click.prevent="hideMatch(oppTeam.id)">Hide</a>
+                            <template v-if="isOwnTeamSelected">
+                                <template v-if="isOfferedBySelectedOwnTeam(oppTeam)">
+                                    <span>Offered</span>
                                 </template>
+                                <template v-else>
+                                    <a href="#" @click.prevent="sendOffer(oppTeam)">Offer</a>
+                                </template>
+                                <a href="#" @click.prevent="hideMatch(oppTeam.id)">Hide</a>
                             </template>
                             <a href="#" @click.prevent="openModal('ROSTER', {team: oppTeam})">Roster</a>
                         </div>
@@ -85,13 +80,10 @@ import GameFinderHelpers from '../GameFinderHelpers';
         selectedOwnTeamOfferedTeamIds: {
             type: Array,
             required: true
-        },
-        selectedOwnTeamHiddenTeamIds: {
-            type: Array,
-            required: true
         }
     },
     watch: {
+        // allow parent to trigger an opponents refresh (e.g. after changing teams that are LFG)
         opponentsRefreshRequired: function () {
             if (this.$props.opponentsRefreshRequired) {
                 this.getOpponents();
@@ -107,6 +99,8 @@ export default class OpponentsComponent extends Vue {
     public pendingOpponents: any = [];
     private opponentsNeedUpdate: boolean;
     public expandedForAllOpponents: number[] = [];
+
+    // allow UI to update when offers are made, but before the main selectedOwnTeamOfferedTeamIds prop array has updated
     private recentOffers: {myTeamId: number, opponentTeamId: number, offerDate: number}[] = [];
 
     async mounted() {
@@ -327,20 +321,16 @@ export default class OpponentsComponent extends Vue {
         return this.$props.selectedOwnTeamOfferedTeamIds.includes(team.id);
     }
 
-    public isHiddenForSelectedOwnTeam(team) {
-        return this.$props.selectedOwnTeamHiddenTeamIds.includes(team.id);
-    }
-
     public setUiUpdatesPaused(isPaused: boolean) {
         this.uiUpdatesPaused = isPaused;
     }
 
-    public unhideMatch(opponentTeamId) {
-        this.$emit('unhide-match', opponentTeamId);
-    }
-
     public hideMatch(opponentTeamId) {
-        this.$emit('hide-match', opponentTeamId);
+        if (! this.$props.selectedOwnTeam) {
+            return;
+        }
+
+        this.$emit('hide-match', this.$props.selectedOwnTeam, opponentTeamId);
     }
 
     public openModal(name: string, modalSettings: any) {

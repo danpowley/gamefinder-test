@@ -1,4 +1,6 @@
 export default class GameFinderPolicies {
+    // @christer this is set to 10 seconds to get quick feedback while testing
+    private static readonly hiddenMatchDurationSeconds = 10;
 
     public static isMatchAllowed(team1, team2): boolean {
         if (!team1 || !team2) {
@@ -90,5 +92,9 @@ export default class GameFinderPolicies {
 
     public static teamIsCompetitiveDivision(team: any): boolean {
         return team.division === 'Competitive';
+    }
+
+    public static getHiddenMatchesExpiry(): number {
+        return Date.now() - this.hiddenMatchDurationSeconds * 1000;
     }
 }

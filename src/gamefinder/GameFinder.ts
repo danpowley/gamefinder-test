@@ -62,10 +62,8 @@ import OpponentsComponent from "./components/Opponents";
                     :opponents-refresh-required="opponentsRefreshRequired"
                     :selected-own-team="selectedOwnTeam"
                     :selected-own-team-offered-team-ids="selectedOwnTeamOfferedTeamIds"
-                    :selected-own-team-hidden-team-ids="selectedOwnTeamHiddenTeamIds"
                     @refresh="refresh"
-                    @hide-match="hideMatch"
-                    @unhide-match="unhideMatch"
+                    @hide-match="handleHideMatch"
                     @opponents-refreshed="setOpponentsRefreshed"
                     @open-modal="openModal"></opponents>
             </div>
@@ -89,8 +87,6 @@ export default class GameFinder extends Vue {
     public opponentMap: Map<string, any> = new Map<string, any>();
     public opponentsRefreshRequired: boolean = false;
     private readHistory: Map<number, number[]> = new Map<number, number[]>();
-
-    private hiddenOpponents: {myTeamId: number, opponentTeamId: number}[] = [];
 
     // the offers property is primarily managed by the OffersComponent, they're held here and passed to OffersComponent as a prop
     public offers:any = [];
@@ -125,7 +121,8 @@ export default class GameFinder extends Vue {
         Util.applyDeepDefaults(activeTeams, [{
             selected: false,
             allow: [],
-            hasUnreadItems: false
+            hasUnreadItems: false,
+            hiddenMatches: []
         }], this.$set);
 
         activeTeams.sort(GameFinderPolicies.sortTeamByDivisionNameLeagueNameTeamName);
@@ -159,6 +156,7 @@ export default class GameFinder extends Vue {
         this.refreshOwnTeamSelectionSettings();
         this.refreshOwnTeamsAllowedSettings();
         this.refreshOwnTeamsUnreadSettings();
+        this.refreshMyTeamsHiddenMatchesExpired();
         this.refreshOpponentVisibility();
     }
 
@@ -220,12 +218,28 @@ export default class GameFinder extends Vue {
         }
     }
 
+    private refreshMyTeamsHiddenMatchesExpired() {
+        for (const myTeam of this.me.teams) {
+            const unexpiredHiddenMatches = [];
+
+            for (const hiddenMatchDetails of myTeam.hiddenMatches) {
+                if (hiddenMatchDetails.hiddenDate > GameFinderPolicies.getHiddenMatchesExpiry()) {
+                    unexpiredHiddenMatches.push(hiddenMatchDetails);
+                }
+            }
+
+            myTeam.hiddenMatches = unexpiredHiddenMatches;
+        }
+    }
+
     private refreshOpponentVisibility() {
         this.opponentMap.forEach(opponent => {
             let numVisibleTeams = 0;
             for (let oppTeam of opponent.teams) {
                 if (this.selectedOwnTeam) {
-                    oppTeam.visible = this.selectedOwnTeam.allow.includes(oppTeam.id);
+                    const isAllowed = this.selectedOwnTeam.allow.includes(oppTeam.id);
+                    const isHidden = this.isHidden(oppTeam.id);
+                    oppTeam.visible = isAllowed && ! isHidden;
                 } else {
                     oppTeam.visible = true;
                 }
@@ -236,6 +250,20 @@ export default class GameFinder extends Vue {
             }
             opponent.visibleTeams = numVisibleTeams;
         });
+    }
+
+    private isHidden(teamId: number): boolean {
+        if (! this.selectedOwnTeam) {
+            return false;
+        }
+
+        for (const hiddenMatchDetails of this.selectedOwnTeam.hiddenMatches) {
+            if (hiddenMatchDetails.opponentTeamId === teamId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Used by Opponents component to show which teams you've sent offers to.
@@ -253,25 +281,6 @@ export default class GameFinder extends Vue {
         }
 
         return selectedOwnTeamOfferedTeamIds;
-    }
-
-    // Used by Opponents component to show hidden teams.
-    get selectedOwnTeamHiddenTeamIds(): number[] {
-        const selectedOwnTeamHiddenTeamIds = [];
-
-        if (! this.selectedOwnTeam) {
-            return selectedOwnTeamHiddenTeamIds;
-        }
-
-        for (const teamIds of this.hiddenOpponents) {
-            if (teamIds.myTeamId === this.selectedOwnTeam.id) {
-                if (! selectedOwnTeamHiddenTeamIds.includes(teamIds.opponentTeamId)) {
-                    selectedOwnTeamHiddenTeamIds.push(teamIds.opponentTeamId);
-                }
-            }
-        }
-
-        return selectedOwnTeamHiddenTeamIds;
     }
 
     private updateReadHistoryForSelectedOwnTeam() {
@@ -313,22 +322,9 @@ export default class GameFinder extends Vue {
         this.blackboxData = blackboxData;
     }
 
-    public hideMatch(opponentTeamId: number): void {
-        if (! this.selectedOwnTeam) {
-            return;
-        }
-
-        this.hiddenOpponents.push({myTeamId: this.selectedOwnTeam.id, opponentTeamId: opponentTeamId});
-    }
-
-    public unhideMatch(opponentTeamId: number): void {
-        if (! this.selectedOwnTeam) {
-            return;
-        }
-
-        this.hiddenOpponents = this.hiddenOpponents.filter(function (teamIds) {
-            return ! (teamIds.myTeamId === this.selectedOwnTeam.id && teamIds.opponentTeamId === opponentTeamId);
-        }, this);
+    public handleHideMatch(myTeam: any, opponentTeamId: number): void {
+        myTeam.hiddenMatches.push({opponentTeamId: opponentTeamId, hiddenDate: Date.now()});
+        this.refreshOpponentVisibility();
     }
 
     private onOuterModalClick(e) {
