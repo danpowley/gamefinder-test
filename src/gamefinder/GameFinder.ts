@@ -237,9 +237,7 @@ export default class GameFinder extends Vue {
             let numVisibleTeams = 0;
             for (let oppTeam of opponent.teams) {
                 if (this.selectedOwnTeam) {
-                    const isAllowed = this.selectedOwnTeam.allow.includes(oppTeam.id);
-                    const isHidden = this.isHidden(oppTeam.id);
-                    oppTeam.visible = isAllowed && ! isHidden;
+                    oppTeam.visible = this.selectedOwnTeam.allow.includes(oppTeam.id);
                 } else {
                     oppTeam.visible = true;
                 }
@@ -250,20 +248,6 @@ export default class GameFinder extends Vue {
             }
             opponent.visibleTeams = numVisibleTeams;
         });
-    }
-
-    private isHidden(teamId: number): boolean {
-        if (! this.selectedOwnTeam) {
-            return false;
-        }
-
-        for (const hiddenMatchDetails of this.selectedOwnTeam.hiddenMatches) {
-            if (hiddenMatchDetails.opponentTeamId === teamId) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // Used by Opponents component to show which teams you've sent offers to.
@@ -324,6 +308,7 @@ export default class GameFinder extends Vue {
 
     public handleHideMatch(myTeam: any, opponentTeamId: number): void {
         myTeam.hiddenMatches.push({opponentTeamId: opponentTeamId, hiddenDate: Date.now()});
+        this.refreshOwnTeamsAllowedSettings();
         this.refreshOpponentVisibility();
     }
 

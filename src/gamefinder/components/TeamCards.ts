@@ -1,6 +1,5 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import GameFinderPolicies from '../GameFinderPolicies';
 import GameFinderHelpers from '../GameFinderHelpers';
 
 @Component({
@@ -18,8 +17,8 @@ import GameFinderHelpers from '../GameFinderHelpers';
                     </div>
                     <div class="opponentinfo">
                         Oppo:
-                        <div class="allowedopponents" :title="countVisibleOpponents(myTeam) + ' possible opponents'">
-                            <span class="newopponentsicon" v-show="myTeam.hasUnreadItems">&#9679</span>{{ countVisibleOpponents(myTeam) }}
+                        <div class="allowedopponents" :title="myTeam.allow.length + ' possible opponents'">
+                            <span class="newopponentsicon" v-show="myTeam.hasUnreadItems">&#9679</span>{{ myTeam.allow.length }}
                         </div>
                     </div>
                 </div>
@@ -41,22 +40,5 @@ export default class TeamCardsComponent extends Vue {
 
     public getTeamLogoUrl(team: any): string {
         return GameFinderHelpers.getTeamLogoUrl(team);
-    }
-
-    public countVisibleOpponents(team: any): number {
-        let visibleCount = 0;
-        for (const opponentTeamId of team.allow) {
-            let isHidden = false;
-            for (const hiddenMatchDetails of team.hiddenMatches) {
-                if (hiddenMatchDetails.opponentTeamId === opponentTeamId) {
-                    isHidden = true;
-                }
-            }
-            if (! isHidden) {
-                visibleCount++;
-            }
-        }
-
-        return visibleCount;
     }
 }
