@@ -188,9 +188,11 @@ export default class GameFinder extends Vue {
         for (let team of this.me.teams) {
             team.allow = [];
             this.opponentMap.forEach(opponent => {
-                for (let oppTeam of opponent.teams) {
-                    if (GameFinderPolicies.isMatchAllowed(team, oppTeam)) {
-                        team.allow.push(oppTeam.id);
+                if (! this.isCoachHidden(opponent.id)) {
+                    for (let oppTeam of opponent.teams) {
+                        if (GameFinderPolicies.isMatchAllowed(team, oppTeam)) {
+                            team.allow.push(oppTeam.id);
+                        }
                     }
                 }
             });
@@ -330,15 +332,25 @@ export default class GameFinder extends Vue {
 
     public handleHideCoach(id: number, name: string): void {
         this.hiddenCoaches.push({id: id, name: name});
+        this.refreshOwnTeamsAllowedSettings();
         this.refreshOpponentVisibility();
     }
 
     public handleUnhideCoach(id: number): void {
-        let index = this.hiddenCoaches.findIndex((coachDetails) => coachDetails.id === id);
-        if (index !== -1) {
-            this.hiddenCoaches.splice(index, 1);
-            this.refreshOpponentVisibility();
+        if (! this.isCoachHidden(id)) {
+            return;
         }
+        this.hiddenCoaches.splice(this.getHiddenCoachIndex(id), 1);
+        this.refreshOwnTeamsAllowedSettings();
+        this.refreshOpponentVisibility();
+    }
+
+    private getHiddenCoachIndex(id: number): number {
+        return this.hiddenCoaches.findIndex((coachDetails) => coachDetails.id === id);
+    }
+
+    private isCoachHidden(id: number): boolean {
+        return this.getHiddenCoachIndex(id) !== -1;
     }
 
     private onOuterModalClick(e) {
