@@ -61,15 +61,21 @@ import OpponentsComponent from "./components/Opponents";
                     :opponent-map="opponentMap"
                     :opponents-refresh-required="opponentsRefreshRequired"
                     :selected-own-team="selectedOwnTeam"
-                    :opponent-team-ids-with-offers-from-selected-own-team="opponentTeamIdsWithOffersFromSelectedOwnTeam"
+                    :selected-own-team-offered-team-ids="selectedOwnTeamOfferedTeamIds"
                     @refresh="refresh"
+                    @hide-match="handleHideMatch"
+                    @hide-coach="handleHideCoach"
                     @opponents-refreshed="setOpponentsRefreshed"
                     @open-modal="openModal"></opponents>
             </div>
 
             <roster :team="modalRosterTeam" @close-modal="closeModal"></roster>
 
-            <settings :is-open="modalSettingsShow" @close-modal="closeModal"></settings>
+            <settings
+                :is-open="modalSettingsShow"
+                :hidden-coaches="hiddenCoaches"
+                @unhide-coach="handleUnhideCoach"
+                @close-modal="closeModal"></settings>
 
             <teamsettings :team="modalTeamSettingsTeam" @close-modal="closeModal"></teamsettings>
         </div>
@@ -81,12 +87,11 @@ export default class GameFinder extends Vue {
     public featureFlags = {blackbox: true};
 
     public selectedOwnTeam:any = null;
-    public opponentTeamIdsWithOffersFromSelectedOwnTeam: number[] = [];
     public me:any = { teams: [] };
 
-    public opponentMap:Map<string,any> = new Map<string,any>();
+    public opponentMap: Map<string, any> = new Map<string, any>();
     public opponentsRefreshRequired: boolean = false;
-    private readHistory:Map<number,number[]> = new Map<number,number[]>();
+    private readHistory: Map<number, number[]> = new Map<number, number[]>();
 
     // the offers property is primarily managed by the OffersComponent, they're held here and passed to OffersComponent as a prop
     public offers:any = [];
@@ -96,6 +101,8 @@ export default class GameFinder extends Vue {
     public modalRosterTeam: any | null = null;
     public modalTeamSettingsTeam: any | null = null;
     public modalSettingsShow: boolean = false;
+
+    public hiddenCoaches: {id: number, name: string}[] = [];
 
     async beforeMount() {
         this.coachName = this.$el.attributes['coach'].value;
@@ -121,7 +128,8 @@ export default class GameFinder extends Vue {
         Util.applyDeepDefaults(activeTeams, [{
             selected: false,
             allow: [],
-            hasUnreadItems: false
+            hasUnreadItems: false,
+            hiddenMatches: []
         }], this.$set);
 
         activeTeams.sort(GameFinderPolicies.sortTeamByDivisionNameLeagueNameTeamName);
@@ -155,8 +163,8 @@ export default class GameFinder extends Vue {
         this.refreshOwnTeamSelectionSettings();
         this.refreshOwnTeamsAllowedSettings();
         this.refreshOwnTeamsUnreadSettings();
+        this.refreshMyTeamsHiddenMatchesExpired();
         this.refreshOpponentVisibility();
-        this.refreshOpponentTeamIdsWithOffersFromSelectedOwnTeam();
     }
 
     private refreshOwnTeamSelectionSettings() {
@@ -180,9 +188,11 @@ export default class GameFinder extends Vue {
         for (let team of this.me.teams) {
             team.allow = [];
             this.opponentMap.forEach(opponent => {
-                for (let oppTeam of opponent.teams) {
-                    if (GameFinderPolicies.isMatchAllowed(team, oppTeam)) {
-                        team.allow.push(oppTeam.id);
+                if (! this.isCoachHidden(opponent.id)) {
+                    for (let oppTeam of opponent.teams) {
+                        if (GameFinderPolicies.isMatchAllowed(team, oppTeam)) {
+                            team.allow.push(oppTeam.id);
+                        }
                     }
                 }
             });
@@ -217,8 +227,31 @@ export default class GameFinder extends Vue {
         }
     }
 
+    private refreshMyTeamsHiddenMatchesExpired() {
+        for (const myTeam of this.me.teams) {
+            const unexpiredHiddenMatches = [];
+
+            for (const hiddenMatchDetails of myTeam.hiddenMatches) {
+                if (hiddenMatchDetails.hiddenDate > GameFinderPolicies.getHiddenMatchesExpiry()) {
+                    unexpiredHiddenMatches.push(hiddenMatchDetails);
+                }
+            }
+
+            myTeam.hiddenMatches = unexpiredHiddenMatches;
+        }
+    }
+
     private refreshOpponentVisibility() {
         this.opponentMap.forEach(opponent => {
+            let opponentVisible = true;
+            for (const coachDetails of this.hiddenCoaches) {
+                if (coachDetails.id === opponent.id) {
+                    opponentVisible = false;
+                    break;
+                }
+            }
+            opponent.visible = opponentVisible;
+
             let numVisibleTeams = 0;
             for (let oppTeam of opponent.teams) {
                 if (this.selectedOwnTeam) {
@@ -235,18 +268,21 @@ export default class GameFinder extends Vue {
         });
     }
 
-    private refreshOpponentTeamIdsWithOffersFromSelectedOwnTeam() {
-        this.opponentTeamIdsWithOffersFromSelectedOwnTeam = [];
+    // Used by Opponents component to show which teams you've sent offers to.
+    get selectedOwnTeamOfferedTeamIds(): number[] {
+        const selectedOwnTeamOfferedTeamIds = [];
 
         if (! this.selectedOwnTeam) {
-            return;
+            return selectedOwnTeamOfferedTeamIds;
         }
 
         for (const offer of this.offers) {
             if (offer.external === false && offer.home.id === this.selectedOwnTeam.id) {
-                this.opponentTeamIdsWithOffersFromSelectedOwnTeam.push(offer.away.id);
+                selectedOwnTeamOfferedTeamIds.push(offer.away.id);
             }
         }
+
+        return selectedOwnTeamOfferedTeamIds;
     }
 
     private updateReadHistoryForSelectedOwnTeam() {
@@ -286,6 +322,35 @@ export default class GameFinder extends Vue {
 
     public handleBlackboxData(blackboxData: {available: number, chosen: number}) {
         this.blackboxData = blackboxData;
+    }
+
+    public handleHideMatch(myTeam: any, opponentTeamId: number): void {
+        myTeam.hiddenMatches.push({opponentTeamId: opponentTeamId, hiddenDate: Date.now()});
+        this.refreshOwnTeamsAllowedSettings();
+        this.refreshOpponentVisibility();
+    }
+
+    public handleHideCoach(id: number, name: string): void {
+        this.hiddenCoaches.push({id: id, name: name});
+        this.refreshOwnTeamsAllowedSettings();
+        this.refreshOpponentVisibility();
+    }
+
+    public handleUnhideCoach(id: number): void {
+        if (! this.isCoachHidden(id)) {
+            return;
+        }
+        this.hiddenCoaches.splice(this.getHiddenCoachIndex(id), 1);
+        this.refreshOwnTeamsAllowedSettings();
+        this.refreshOpponentVisibility();
+    }
+
+    private getHiddenCoachIndex(id: number): number {
+        return this.hiddenCoaches.findIndex((coachDetails) => coachDetails.id === id);
+    }
+
+    private isCoachHidden(id: number): boolean {
+        return this.getHiddenCoachIndex(id) !== -1;
     }
 
     private onOuterModalClick(e) {

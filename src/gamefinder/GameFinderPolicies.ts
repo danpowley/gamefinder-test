@@ -1,43 +1,51 @@
 export default class GameFinderPolicies {
+    // @christer this is set to 10 seconds to get quick feedback while testing
+    private static readonly hiddenMatchDurationSeconds = 10;
 
-    public static isMatchAllowed(team1, team2): boolean {
-        if (!team1 || !team2) {
+    public static isMatchAllowed(myTeam, opponentTeam): boolean {
+        if (!myTeam || !opponentTeam) {
             return false;
         }
 
-        if (team1.coach == team2.coach) {
+        for (const hiddenMatchDetails of myTeam.hiddenMatches) {
+            if (hiddenMatchDetails.opponentTeamId === opponentTeam.id) {
+                return false;
+            }
+        }
+
+        if (myTeam.coach == opponentTeam.coach) {
             return false;
         }
 
-        if (team1.division != team2.division) {
+        if (myTeam.division != opponentTeam.division) {
             return false;
         }
 
-        if (team1.status != "Active" || team2.status != "Active") {
+        if (myTeam.status != "Active" || opponentTeam.status != "Active") {
             return false;
         }
 
-        if (!team1.canLfg || !team2.canLfg) {
+        if (!myTeam.canLfg || !opponentTeam.canLfg) {
             return false;
         }
 
-        if (team1.league.valid && team2.league.valid) {
-            if (team1.league.ruleset.id != team2.league.ruleset.id) {
+        if (myTeam.league.valid && opponentTeam.league.valid) {
+            if (myTeam.league.ruleset.id != opponentTeam.league.ruleset.id) {
                 return false;
             }
 
-            if (team1.league.id != team2.league.id) {
-                if (!team1.league.ruleset.options['rulesetOptions.crossLeagueMatches'] || !team2.league.ruleset.options['rulesetOptions.crossLeagueMatches']) {
+            if (myTeam.league.id != opponentTeam.league.id) {
+                if (!myTeam.league.ruleset.options['rulesetOptions.crossLeagueMatches'] || !opponentTeam.league.ruleset.options['rulesetOptions.crossLeagueMatches']) {
 
                     return false;
                 }
             }
         }
 
-        if (team1.percentageLimit || team2.percentageLimit) {
-            let tvDiff = Math.abs(team1.teamValue - team2.teamValue);
-            let limit1 = this.getTvLimit(team1);
-            let limit2 = this.getTvLimit(team2);
+        if (myTeam.percentageLimit || opponentTeam.percentageLimit) {
+            let tvDiff = Math.abs(myTeam.teamValue - opponentTeam.teamValue);
+            let limit1 = this.getTvLimit(myTeam);
+            let limit2 = this.getTvLimit(opponentTeam);
 
             if (limit1 != 0 && tvDiff > limit1) {
                 return false;
@@ -90,5 +98,9 @@ export default class GameFinderPolicies {
 
     public static teamIsCompetitiveDivision(team: any): boolean {
         return team.division === 'Competitive';
+    }
+
+    public static getHiddenMatchesExpiry(): number {
+        return Date.now() - this.hiddenMatchDurationSeconds * 1000;
     }
 }
