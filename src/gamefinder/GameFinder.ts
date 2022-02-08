@@ -64,13 +64,18 @@ import OpponentsComponent from "./components/Opponents";
                     :selected-own-team-offered-team-ids="selectedOwnTeamOfferedTeamIds"
                     @refresh="refresh"
                     @hide-match="handleHideMatch"
+                    @hide-coach="handleHideCoach"
                     @opponents-refreshed="setOpponentsRefreshed"
                     @open-modal="openModal"></opponents>
             </div>
 
             <roster :team="modalRosterTeam" @close-modal="closeModal"></roster>
 
-            <settings :is-open="modalSettingsShow" @close-modal="closeModal"></settings>
+            <settings
+                :is-open="modalSettingsShow"
+                :hidden-coaches="hiddenCoaches"
+                @unhide-coach="handleUnhideCoach"
+                @close-modal="closeModal"></settings>
 
             <teamsettings :team="modalTeamSettingsTeam" @close-modal="closeModal"></teamsettings>
         </div>
@@ -96,6 +101,8 @@ export default class GameFinder extends Vue {
     public modalRosterTeam: any | null = null;
     public modalTeamSettingsTeam: any | null = null;
     public modalSettingsShow: boolean = false;
+
+    public hiddenCoaches: {id: number, name: string}[] = [];
 
     async beforeMount() {
         this.coachName = this.$el.attributes['coach'].value;
@@ -234,6 +241,15 @@ export default class GameFinder extends Vue {
 
     private refreshOpponentVisibility() {
         this.opponentMap.forEach(opponent => {
+            let opponentVisible = true;
+            for (const coachDetails of this.hiddenCoaches) {
+                if (coachDetails.id === opponent.id) {
+                    opponentVisible = false;
+                    break;
+                }
+            }
+            opponent.visible = opponentVisible;
+
             let numVisibleTeams = 0;
             for (let oppTeam of opponent.teams) {
                 if (this.selectedOwnTeam) {
@@ -310,6 +326,19 @@ export default class GameFinder extends Vue {
         myTeam.hiddenMatches.push({opponentTeamId: opponentTeamId, hiddenDate: Date.now()});
         this.refreshOwnTeamsAllowedSettings();
         this.refreshOpponentVisibility();
+    }
+
+    public handleHideCoach(id: number, name: string): void {
+        this.hiddenCoaches.push({id: id, name: name});
+        this.refreshOpponentVisibility();
+    }
+
+    public handleUnhideCoach(id: number): void {
+        let index = this.hiddenCoaches.findIndex((coachDetails) => coachDetails.id === id);
+        if (index !== -1) {
+            this.hiddenCoaches.splice(index, 1);
+            this.refreshOpponentVisibility();
+        }
     }
 
     private onOuterModalClick(e) {

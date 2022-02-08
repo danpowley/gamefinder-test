@@ -28,6 +28,7 @@ import GameFinderHelpers from '../GameFinderHelpers';
                     <span class="ranking">
                         {{ opponent.ranking }}
                     </span>
+                    <span v-show="! isExpanded(opponent)"><a href="#" class="hidecoach" @click.prevent="hideCoach(opponent.id, opponent.name)">hide</a></span>
                 </div>
                 <div v-show="isExpanded(opponent)">
                     <div v-for="oppTeam in opponent.teams" v-if="oppTeam.visible" :key="oppTeam.id" class="team">
@@ -122,6 +123,7 @@ export default class OpponentsComponent extends Vue {
         Util.applyDeepDefaults(data, [{
             visibleTeams: 0,
             expanded: false,
+            visible: true,
             teams: [{
                 visible: false,
                 selected: false
@@ -247,6 +249,9 @@ export default class OpponentsComponent extends Vue {
     public get visibleOpponents(): any[] {
         const visibleOpponents = [];
         for (const opponent of this.opponents) {
+            if (! opponent.visible) {
+                continue;
+            }
             if (opponent.visibleTeams > 0) {
                 visibleOpponents.push(opponent);
             }
@@ -331,6 +336,10 @@ export default class OpponentsComponent extends Vue {
         }
 
         this.$emit('hide-match', this.$props.selectedOwnTeam, opponentTeamId);
+    }
+
+    public hideCoach(id: number, name: string) {
+        this.$emit('hide-coach', id, name);
     }
 
     public openModal(name: string, modalSettings: any) {
