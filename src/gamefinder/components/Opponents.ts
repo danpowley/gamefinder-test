@@ -18,7 +18,7 @@ import GameFinderHelpers from '../GameFinderHelpers';
             </div>
             <div v-show="visibleOpponents.length === 0">No opponents available.</div>
             <div v-for="opponent in visibleOpponents" :key="opponent.id" class="opponent">
-                <div class="coach">
+                <div class="coach" :class="{fadeout: fadeOutId === 'coach' + opponent.id}">
                     <a class="disclosure" @click.prevent="expandOpponent(opponent)" href="#">
                         <span class="showhideicon" v-if="isExpanded(opponent)">&#x25bc;</span>
                         <span class="showhideicon" v-else>&#x25b6;</span>
@@ -31,7 +31,7 @@ import GameFinderHelpers from '../GameFinderHelpers';
                     <span v-show="! isExpanded(opponent)"><a href="#" class="hidecoach" @click.prevent="hideCoach(opponent.id, opponent.name)">hide</a></span>
                 </div>
                 <div v-show="isExpanded(opponent)">
-                    <div v-for="oppTeam in opponent.teams" v-if="oppTeam.visible" :key="oppTeam.id" class="team">
+                    <div v-for="oppTeam in opponent.teams" v-if="oppTeam.visible" :key="oppTeam.id" class="team" :class="{fadeout: fadeOutId === 'team' + oppTeam.id}">
                         <div class="logo">
                             <img :src="getTeamLogoUrl(oppTeam)" />
                         </div>
@@ -103,6 +103,8 @@ export default class OpponentsComponent extends Vue {
 
     // allow UI to update when offers are made, but before the main selectedOwnTeamOfferedTeamIds prop array has updated
     private recentOffers: {myTeamId: number, opponentTeamId: number, offerDate: number}[] = [];
+
+    public fadeOutId: string | null = null;
 
     async mounted() {
         await this.getOpponents();
@@ -335,11 +337,39 @@ export default class OpponentsComponent extends Vue {
             return;
         }
 
-        this.$emit('hide-match', this.$props.selectedOwnTeam, opponentTeamId);
+        this.applyFade(
+            () => this.$emit('hide-match', this.$props.selectedOwnTeam, opponentTeamId),
+            'team',
+            opponentTeamId,
+            300
+        );
     }
 
     public hideCoach(id: number, name: string) {
-        this.$emit('hide-coach', id, name);
+        this.applyFade(
+            () => this.$emit('hide-coach', id, name),
+            'coach',
+            id,
+            500
+        );
+    }
+
+    private applyFade(workload: Function, itemType: 'team' | 'coach', itemId: number, waitTime: number) {
+        let fadeOutId = itemType + itemId;
+
+        // set the fadeOutId so that the fade transition class is added to the element
+        this.fadeOutId = fadeOutId;
+
+        // allow the transition to happen before we raise the event that will instantly hide the element
+        setTimeout(() => {
+            // run the real workload
+            workload();
+
+            // clear the fadeOutId so it doesn't keep on hiding the element when this becomes visible again
+            if (this.fadeOutId === fadeOutId) {
+                this.fadeOutId = null;
+            }
+        }, waitTime);
     }
 
     public openModal(name: string, modalSettings: any) {
