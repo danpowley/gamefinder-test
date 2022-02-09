@@ -62,6 +62,7 @@ import OpponentsComponent from "./components/Opponents";
                     :opponents-refresh-required="opponentsRefreshRequired"
                     :selected-own-team="selectedOwnTeam"
                     :selected-own-team-offered-team-ids="selectedOwnTeamOfferedTeamIds"
+                    :hidden-coach-count="hiddenCoaches.length"
                     @refresh="refresh"
                     @hide-match="handleHideMatch"
                     @hide-coach="handleHideCoach"
