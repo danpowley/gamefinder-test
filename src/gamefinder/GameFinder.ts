@@ -35,7 +35,12 @@ import OpponentsComponent from "./components/Opponents";
                     :available="blackboxData.available"
                     :chosen="blackboxData.chosen"></blackbox>
 
-                <offers :offers="offers" :coach-name="coachName"></offers>
+                <offers
+                    :offers="offers"
+                    :coach-name="coachName"
+                    :my-teams="me.teams"
+                    :hidden-coaches="hiddenCoaches"
+                    @hide-match="handleHideMatch"></offers>
             </div>
 
             <div class="rightcolumn">
@@ -62,6 +67,7 @@ import OpponentsComponent from "./components/Opponents";
                     :opponents-refresh-required="opponentsRefreshRequired"
                     :selected-own-team="selectedOwnTeam"
                     :selected-own-team-offered-team-ids="selectedOwnTeamOfferedTeamIds"
+                    :hidden-coach-count="hiddenCoaches.length"
                     @refresh="refresh"
                     @hide-match="handleHideMatch"
                     @hide-coach="handleHideCoach"
