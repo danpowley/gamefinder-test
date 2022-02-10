@@ -199,6 +199,13 @@ class Database {
 
     return unexpiredOffers
   }
+
+  removeOffer(offerId) {
+    let index = this.offers.findIndex((o) => o.id === offerId);
+    if (index !== -1) {
+      this.offers.splice(index, 1);
+    }
+  }
 }
 
 module.exports = Database

@@ -67,10 +67,7 @@ app.post('/api/gamefinder/getoffers', (req, res) => {
 // used by cancelOffer to remove an offer from the offers array
 app.post('/api/gamefinder/canceloffer/:offerId', (req, res) => {
   const offerId = ~~req.params.offerId
-  let index = offers.findIndex((o) => o.id === offerId);
-  if (index !== -1) {
-      offers.splice(index, 1);
-  }
+  db.removeOffer(offerId)
 
   res.send(true)
 })

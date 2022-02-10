@@ -7,25 +7,25 @@ import { Util } from '../../core/util';
     template: `
         <div class="basicbox">
             <div class="header">Match Offers<div v-show="additionalOffers > 0" class="additionaloffers">Additional offers: {{ additionalOffers }}</div></div>
-            <div class="content" id="offerlistwrapper">
+            <div class="content" id="offerlistwrapper" @mouseenter="setUiUpdatesPaused(true)" @mouseleave="setUiUpdatesPaused(false)">
                 <div v-show="offers.length === 0" class="nooffers">Sorry, no current offers.</div>
-                <div id="offerlist" @mouseenter="setUiUpdatesPaused(true)" @mouseleave="setUiUpdatesPaused(false)">
+                <div id="offerlist">
                     <div v-for="offer in offers" :key="offer.id" class="matchoffer">
                         <div class="icon external" v-show="offer.external">?</div>
                         <div class="icon accept" v-show="offer.external">&#x2714;</div>
-                        <div class="icon cancel">&#x2718;</div>
+                        <div class="icon cancel" @click.prevent="cancelOffer(offer)">&#x2718;</div>
                         <div class="offeredteam home">
                             <div class="name">
                                 {{ abbreviate(offer.home.team, 30) }}
                             </div>
                             <div class="desc">
-                                TV {{offer.home.tv}} {{offer.home.race}}
+                                TV {{ offer.home.tv }} {{ offer.home.race }}
                             </div>
                         </div>
                         <div class="timer" :style="{ width: (100 * offer.timeRemaining / offer.lifetime) + '%', left: (50 - 50 * offer.timeRemaining / offer.lifetime) + '%'}"></div>
                         <div class="offeredteam away">
                             <div class="desc">
-                                {{offer.away.race}} TV {{offer.away.tv}}
+                                {{ offer.away.race }} TV {{ offer.away.tv }}
                             </div>
                             <div class="name">
                                 {{ abbreviate(offer.away.team, 30) }}
@@ -44,6 +44,14 @@ import { Util } from '../../core/util';
         offers: {
             type: Array,
             required: true
+        },
+        myTeams: {
+            type: Array,
+            required: true
+        },
+        hiddenCoaches: {
+            type: Array,
+            required: true
         }
     }
 })
@@ -52,6 +60,8 @@ export default class OffersComponent extends Vue {
     public pendingOffers:any = [];
 
     private uiUpdatesPaused: boolean = false;
+
+    private cancelledOfferIds:number[] = [];
 
     async mounted() {
         setInterval(this.tick, 100);
@@ -95,7 +105,7 @@ export default class OffersComponent extends Vue {
 
         // Process match offers
         for (let i = this.$props.offers.length - 1; i>=0; i--) {
-            if (this.$props.offers[i].expiry < now) {
+            if (! this.isOfferValid(now, this.$props.offers[i])) {
                 this.$props.offers.splice(i, 1);
             }
         }
@@ -129,11 +139,39 @@ export default class OffersComponent extends Vue {
                     }
                 }
                 if (!found) {
-                    num++;
+                    if (this.isOfferValid(now, pending)) {
+                        num++;
+                    }
                 }
             }
             this.additionalOffers = num;
         }
+    }
+
+    private isOfferValid(now: number, offer: any): boolean {
+        if (this.cancelledOfferIds.includes(offer.id)) {
+            return false;
+        }
+
+        if (offer.expiry < now) {
+            return false;
+        }
+
+        const myTeam = this.getMyTeam(offer.home.id);
+
+        const isMatchAllowed = myTeam.allow.includes(offer.away.id);
+
+        if (! isMatchAllowed) {
+            return false;
+        }
+
+        for (const coachDetails of this.$props.hiddenCoaches) {
+            if (coachDetails.id === offer.away.coach.id) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private offerIsAlreadyPending(offerId: number): boolean {
@@ -161,16 +199,50 @@ export default class OffersComponent extends Vue {
                 team: offerData.team1.name,
                 race: offerData.team1.race.name,
                 tv: (offerData.team1.teamValue / 1000) + 'k',
+                coach: offerData.team1.coach
             },
             away: {
                 id: offerData.team2.id,
                 team: offerData.team2.name,
                 race: offerData.team2.race.name,
-                tv: (offerData.team2.teamValue / 1000) + 'k'
+                tv: (offerData.team2.teamValue / 1000) + 'k',
+                coach: offerData.team2.coach
             }
         };
 
-        this.pendingOffers.unshift(offer);
+        if (this.isOfferValid(Date.now(), offer)) {
+            this.pendingOffers.unshift(offer);
+        }
+    }
+
+    private getMyTeam(myTeamId: number): any {
+        for (const myTeam of this.$props.myTeams) {
+            if (myTeam.id === myTeamId) {
+                return myTeam;
+            }
+        }
+        return null;
+    }
+
+    public cancelOffer(offer: any): void {
+        this.cancelledOfferIds.push(offer.id);
+
+        if (offer.external) {
+            // we need to use the team from myTeams as this holds the hiddenMatches data
+            const myTeam = this.getMyTeam(offer.home.id);
+            if (! myTeam) {
+                return;
+            }
+
+            this.$emit('hide-match', myTeam, offer.away.id);
+        } else {
+            let index = this.$props.offers.findIndex((o) => o.id === offer.id);
+            if (index !== -1) {
+                this.$props.offers.splice(index, 1);
+            }
+            // @christer I've added this one, wasn't in your original set of API calls
+            Axios.post('/api/gamefinder/canceloffer/' + offer.id);
+        }
     }
 
     public setUiUpdatesPaused(isPaused: boolean) {
