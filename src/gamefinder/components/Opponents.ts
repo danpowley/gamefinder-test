@@ -16,7 +16,6 @@ import GameFinderHelpers from '../GameFinderHelpers';
                     title="New opponents won't be added/removed until you move your mouse away from this area. This is to prevent the page moving whilst you browse opponents."
                     >Frozen</span>
             </div>
-            <div v-show="hiddenCoachCount > 0">Total hidden coaches: {{ hiddenCoachCount }} <a href="#" @click.prevent="openModal('SETTINGS', {})">manage</a></div>
             <div v-show="visibleOpponents.length === 0">No opponents available.</div>
             <div v-for="opponent in visibleOpponents" :key="opponent.id" class="opponent">
                 <div class="coach" :class="{fadeout: fadeOutId === 'coach' + opponent.id}">
@@ -59,6 +58,7 @@ import GameFinderHelpers from '../GameFinderHelpers';
                     </div>
                 </div>
             </div>
+            <div v-show="hiddenCoachCount > 0"><a href="#" class="muted" @click.prevent="openModal('SETTINGS', {})">+{{ hiddenCoachCount }} total hidden coaches</a></div>
         </div>
     `,
     props: {
