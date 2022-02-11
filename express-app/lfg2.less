@@ -1,16 +1,17 @@
+// official colours
+@Carmine: #A10005;
+@Forest: #1A401C;
+@Eggshell: #e7ddc7;
+@OldLace: #f8f5e7;
+@White: #fff;
+@Quicksilver: #999999;
+@Jet: #2f2f2f;
+@Black: #000;
+
+// unofficial colours
 @brightGreen: #090;
-@darkGreen: #242;
-@anotherDarkGreen: #1A401C;
-@andAnotherDarkGreen: #030;
-@mediumRed: #A10005;
 @cancelRed: #900;
 @darkBlue: #009;
-@brightBeige: #f8f5e7;
-@mediumBeige: #e6ddc7;
-@white: #fff;
-@veryDarkGrey: #2f2f2f;
-@black: #000;
-@mediumGrey: #999999;
 @lightGrey: #ddd;
 
 .gamefinder {
@@ -21,15 +22,15 @@
     margin: 0 0 10px 0;
 
     .content {
-      background: @brightBeige;
+      background: @OldLace;
       overflow-y: auto;
       padding: 7px;
     }
 
     .header {
       font-size: 11pt;
-      background: @darkGreen;
-      color: @white;
+      background: @Forest;
+      color: @White;
       border-top-left-radius: 5px;
       border-top-right-radius: 5px;
       padding: 1px 7px;
@@ -47,6 +48,7 @@
   }
 
   #blackboxwrapper {
+    overflow-anchor: none;
     min-height: 100px;
 
     .nextdraw {
@@ -75,13 +77,14 @@
     }
 
     #offerlist {
+      overflow-anchor: none;
       min-height: 80px;
 
       .matchoffer {
         position: relative;
         padding: 5px;
         margin-bottom: 5px;
-        border-bottom: solid @veryDarkGrey 1px;
+        border-bottom: solid @Jet 1px;
 
         &:last-child {
           border-bottom-style: none;
@@ -113,7 +116,7 @@
             display: none;
             border: solid @cancelRed 2px;
             background: @cancelRed;
-            color: @white;
+            color: @White;
             z-index: 1;
           }
 
@@ -121,7 +124,7 @@
             display: block;
             border: solid @darkBlue 2px;
             background: @darkBlue;
-            color: @white;
+            color: @White;
           }
 
           &.accept {
@@ -129,7 +132,7 @@
             right: 23px;
             border: solid @brightGreen 2px;
             background: @brightGreen;
-            color: @white;
+            color: @White;
           }
         }
 
@@ -177,7 +180,7 @@
     padding: 0;
 
     .lfgteam {
-      border-bottom: solid @darkGreen 1px;
+      border-bottom: solid @Forest 1px;
       height: 38px;
       padding: 2px;
       display: flex;
@@ -243,20 +246,20 @@
       border-radius: 5px;
       cursor: pointer;
       user-select: none;
-      border: solid 2px @mediumBeige;
+      border: solid 2px @Eggshell;
       font-size: 9pt;
-      background-color: @brightBeige;
+      background-color: @OldLace;
 
       &.active, &:hover {
         background-color: white;
       }
 
       &.active {
-        border-color: @darkGreen !important;
+        border-color: @Forest !important;
       }
 
       &:hover {
-        border-color: @mediumRed;
+        border-color: @Carmine;
       }
 
       .cardlogo {
@@ -279,7 +282,7 @@
           flex-grow: 1;
           border-top-right-radius: 5px;
           padding: 0;
-          border-bottom: solid @darkGreen 1px;
+          border-bottom: solid @Forest 1px;
           margin: 2px 4px 0 0;
 
           .divisionletter {
@@ -299,7 +302,7 @@
 
             .newopponentsicon {
               display: inline-block;
-              color: lighten(@anotherDarkGreen, 20%);
+              color: lighten(@Forest, 20%);
               font-size: 9pt;
               padding-right: 1px;
             }
@@ -313,7 +316,7 @@
     margin-top: 4px;
     display: flex;
     padding: 6px;
-    background-color: @brightBeige;
+    background-color: @OldLace;
     min-height: 50px;
 
     .logo {
@@ -354,12 +357,12 @@
 
   #opponentslist {
     margin-top: 6px;
-    background-color: @brightBeige;
+    background-color: @OldLace;
     padding: 6px;
     min-height: 600px;
 
     .frozentag {
-      background-color: @mediumGrey;
+      background-color: @Quicksilver;
       color: white;
       font-size: 8pt;
       padding: 3px 4px 2px 4px;
@@ -385,14 +388,14 @@
         text-decoration: none;
 
         .showhideicon {
-          color: @black;
+          color: @Black;
           min-width: 14px;
           display: inline-block;
         }
       }
 
       .teamcount {
-        color: @veryDarkGrey;
+        color: @Jet;
         padding: 1px 1px 1px 1px;
         font-size: 8pt;
         min-width: 15px;
@@ -400,7 +403,7 @@
         line-height: 1em;
         margin-top: 3px;
         border-radius: 3px;
-        border: solid @mediumGrey 1px;
+        border: solid @Quicksilver 1px;
       }
 
       .ranking {
@@ -409,14 +412,14 @@
       }
 
       a.hidecoach {
-        color: @mediumGrey;
+        color: @Quicksilver;
       }
     }
 
     .team {
       margin-left: 1em;
       display: flex;
-      border: solid @brightBeige 1px;
+      border: solid @OldLace 1px;
 
       .logo {
         margin: 2px 5px 2px 4px;
@@ -441,7 +444,7 @@
             display: inline-block;
             margin-top: 2px;
             padding: 0 4px 1px 2px;
-            background-color: @veryDarkGrey;
+            background-color: @Jet;
             color: white;
             font-size: 7pt;
           }
@@ -449,8 +452,8 @@
       }
 
       &:hover {
-        background: @white;
-        border: solid @darkGreen 1px;
+        background: @White;
+        border: solid @Forest 1px;
       }
 
       .links {
@@ -493,8 +496,8 @@
 
   .mixin_modalinner {
     position: relative;
-    background-color: @brightBeige;
-    border: solid 2px @darkGreen;
+    background-color: @OldLace;
+    border: solid 2px @Forest;
     padding: 10px;
     margin: auto;
     width: 750px;
@@ -506,12 +509,12 @@
       position: absolute;
       top: 2px;
       right: 10px;
-      color: @mediumGrey;
+      color: @Quicksilver;
       font-weight: 700;
       font-size: 20pt;
 
       &:hover {
-        color: @veryDarkGrey;
+        color: @Jet;
         text-decoration: none;
       }
     }
@@ -522,7 +525,7 @@
     .rosterinner {
       .mixin_modalinner();
       table {
-        border-top: solid 1px @andAnotherDarkGreen;
+        border-top: solid 1px @Forest;
         padding: 0;
         margin: 0;
 
@@ -554,14 +557,14 @@
 
   .settingstitle {
     font-size: 12pt;
-    border-bottom: solid @veryDarkGrey 1px;
+    border-bottom: solid @Jet 1px;
     margin-bottom: 10px;
   }
 
   .settingssection {
     padding-bottom: 5px;
     margin-bottom: 20px;
-    border-bottom: solid @mediumGrey 1px;
+    border-bottom: solid @Quicksilver 1px;
   }
 
   .settingsouter {
@@ -581,7 +584,7 @@
   }
 
   .muted {
-    color: @mediumGrey;
+    color: @Quicksilver;
   }
 
   .fadeout {
